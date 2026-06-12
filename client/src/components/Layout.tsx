@@ -4,7 +4,7 @@ import { useApp } from "@/lib/app-context";
 import {
   LayoutDashboard, KanbanSquare, Users, FileText, HardHat, DollarSign,
   Zap, CheckSquare, Calendar, Settings as SettingsIcon, Moon, Sun, Truck, Tag, Bell,
-  PackageOpen, AlertTriangle, Receipt, MapPin,
+  PackageOpen, AlertTriangle, Receipt, MapPin, ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -18,7 +18,9 @@ import { renderMessageBody } from "@/components/JobDrawer";
 import { EmptyState } from "@/components/ui-bits";
 import { useState } from "react";
 
-const NAV = [
+type NavItem = { href: string; label: string; icon: any; children?: { href: string; label: string }[] };
+
+const NAV: NavItem[] = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/pipeline", label: "Pipeline", icon: KanbanSquare },
   { href: "/opportunities", label: "Opportunities", icon: Users },
@@ -30,7 +32,13 @@ const NAV = [
   { href: "/material-returns", label: "Material Returns", icon: PackageOpen },
   { href: "/financials", label: "Financials", icon: DollarSign },
   { href: "/ar-aging", label: "AR Aging", icon: Receipt },
-  { href: "/automations", label: "Automations", icon: Zap },
+  {
+    href: "/automations", label: "Automations", icon: Zap, children: [
+      { href: "/automations/triggers", label: "Triggers" },
+      { href: "/automations/campaigns", label: "Automation Campaigns" },
+      { href: "/automations/active", label: "Active Automations" },
+    ],
+  },
   { href: "/tasks", label: "Tasks", icon: CheckSquare },
   { href: "/calendar", label: "Calendar", icon: Calendar },
   { href: "/vendors", label: "Vendors", icon: Truck },
@@ -97,6 +105,43 @@ function MentionsBell() {
   );
 }
 
+function NavParent({ item, loc, active }: { item: NavItem; loc: string; active: boolean }) {
+  const [open, setOpen] = useState(active);
+  return (
+    <div>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className={cn(
+          "flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm font-medium cursor-pointer transition-colors",
+          active ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+        )}
+        data-testid={`nav-${item.label.toLowerCase()}`}
+      >
+        <item.icon className="w-4 h-4 shrink-0" />
+        {item.label}
+        <ChevronDown className={cn("w-3.5 h-3.5 ml-auto transition-transform", open && "rotate-180")} />
+      </button>
+      {open && (
+        <div className="mt-0.5 ml-4 pl-3 border-l border-sidebar-border space-y-0.5">
+          {item.children!.map((c) => {
+            const cActive = loc === c.href || loc.startsWith(c.href);
+            return (
+              <Link key={c.href} href={c.href} data-testid={`nav-sub-${c.label.toLowerCase().replace(/\s+/g, "-")}`}>
+                <div className={cn(
+                  "px-3 py-1.5 rounded-md text-[13px] cursor-pointer transition-colors",
+                  cActive ? "bg-sidebar-accent text-sidebar-foreground font-medium" : "text-sidebar-foreground/65 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                )}>
+                  {c.label}
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Logo() {
   return (
     <svg width="30" height="30" viewBox="0 0 32 32" fill="none" aria-label="Impact Exteriors logo" className="shrink-0">
@@ -126,6 +171,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         <nav className="flex-1 p-2 space-y-0.5">
           {NAV.map((n) => {
             const active = loc === n.href || (n.href !== "/" && loc.startsWith(n.href));
+            if (n.children) return <NavParent key={n.href} item={n} loc={loc} active={active} />;
             return (
               <Link key={n.href} href={n.href} data-testid={`nav-${n.label.toLowerCase()}`}>
                 <div className={cn(
@@ -152,7 +198,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             <span className="font-bold text-sm">Impact CRM</span>
           </div>
           <div className="hidden md:block text-sm text-muted-foreground">
-            {NAV.find((n) => n.href === loc)?.label || "Impact CRM"}
+            {NAV.flatMap((n) => n.children ? [n, ...n.children.map((c) => ({ href: c.href, label: `${n.label} · ${c.label}` }))] : [n]).find((n) => n.href === loc)?.label || "Impact CRM"}
           </div>
           <div className="flex items-center gap-2">
             <MentionsBell />
@@ -176,7 +222,11 @@ export default function Layout({ children }: { children: ReactNode }) {
 
         {/* Mobile nav */}
         <nav className="md:hidden flex gap-1 overflow-x-auto px-2 py-2 border-b border-border shrink-0 bg-background">
-          {NAV.map((n) => {
+          {NAV.flatMap((n) =>
+            n.children
+              ? n.children.map((c) => ({ href: c.href, label: c.label, icon: n.icon }))
+              : [{ href: n.href, label: n.label, icon: n.icon }]
+          ).map((n) => {
             const active = loc === n.href || (n.href !== "/" && loc.startsWith(n.href));
             return (
               <Link key={n.href} href={n.href}>

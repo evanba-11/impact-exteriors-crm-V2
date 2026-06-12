@@ -31,7 +31,7 @@ export default function Automations() {
 
   return (
     <div className="p-6 space-y-4">
-      <PageHeader title="Automations" subtitle="Server-side scheduler runs every 30s · simulated SMS/email outbox" actions={
+      <PageHeader title="Active Automations" subtitle="Server-side scheduler runs every 30s · simulated SMS/email outbox" actions={
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={() => runMut.mutate()} data-testid="button-run-scheduler"><Play className="w-4 h-4 mr-1" />Run now</Button>
           <NewAutomation templates={templates} />

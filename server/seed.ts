@@ -436,6 +436,97 @@ export function backfillUpdate7() {
     storage.updateMaterialReturn(rMixed.id, { totalReturnValue: 5 * (a?.unitCost || 9) + 2 * (b?.unitCost || 35), vendorId: null });
     console.log("[backfill] seeded demo material returns");
   }
+
+  backfillUpdate9();
+}
+
+/* Update 9: seed example Automation Campaigns + Workflow Triggers (idempotent). */
+export function backfillUpdate9() {
+  if (storage.countCampaigns() === 0) {
+    const d = (s: string) => new Date(s).getTime();
+    type C = [string, string, string, boolean, number, number, number, number, number];
+    // [name, section, color, active, steps, activeNow, runsThisWeek, totalRuns, lastUpdatedMs]
+    const rows: C[] = [
+      // SPEED-TO-LEAD
+      ["Website STL", "SPEED-TO-LEAD", "#0f172a", true, 34, 0, 0, 0, d("2026-05-09")],
+      ["Angi Leads", "SPEED-TO-LEAD", "#16a34a", false, 34, 0, 0, 0, d("2026-05-27")],
+      ["RQP Leads", "SPEED-TO-LEAD", "#16a34a", false, 58, 0, 0, 0, d("2026-05-27")],
+      ["Booking Link", "SPEED-TO-LEAD", "#0f172a", true, 10, 0, 0, 0, d("2026-05-09")],
+      // SALES FOLLOW-UP
+      ["Other Follow-Up", "SALES FOLLOW-UP", "#16a34a", false, 58, 0, 0, 0, d("2026-05-27")],
+      ["Exteriors Follow-Up", "SALES FOLLOW-UP", "#16a34a", false, 58, 0, 0, 0, d("2026-05-27")],
+      ["Roof Replacement Follow-Up", "SALES FOLLOW-UP", "#16a34a", true, 58, 0, 0, 0, d("2026-06-09")],
+      ["Roof Repair Follow-Up", "SALES FOLLOW-UP", "#16a34a", false, 58, 0, 0, 0, d("2026-05-27")],
+      ["Commercial Roofing F/U", "SALES FOLLOW-UP", "#16a34a", false, 33, 0, 0, 0, d("2026-05-27")],
+      ["Contingency Follow-Up", "SALES FOLLOW-UP", "#16a34a", false, 57, 0, 0, 0, d("2026-05-27")],
+      ["Deposit Invoice Follow-Ups", "SALES FOLLOW-UP", "#16a34a", false, 18, 0, 0, 0, d("2026-05-27")],
+      ["Final Invoice Follow-Ups", "SALES FOLLOW-UP", "#16a34a", false, 15, 0, 0, 0, d("2026-05-27")],
+      ["Quote Signed - Send Deposit Invoice", "SALES FOLLOW-UP", "#16a34a", false, 2, 0, 0, 0, d("2026-05-27")],
+      ["Clean Inspection", "SALES FOLLOW-UP", "#16a34a", false, 26, 0, 0, 0, d("2026-06-10")],
+      // JOB UPDATES
+      ["Appt Reminders", "JOB UPDATES", "#475569", false, 7, 0, 0, 0, d("2026-06-04")],
+      ["Quote In Progress", "JOB UPDATES", "#16a34a", false, 3, 0, 0, 0, d("2026-05-27")],
+      ["Materials Ordered", "JOB UPDATES", "#16a34a", false, 3, 0, 0, 0, d("2026-05-27")],
+      ["Job Completed", "JOB UPDATES", "#16a34a", false, 4, 0, 0, 0, d("2026-05-27")],
+      ["Job Scheduled", "JOB UPDATES", "#16a34a", false, 8, 0, 0, 0, d("2026-05-27")],
+      ["Order Materials Before Production", "JOB UPDATES", "#16a34a", false, 1, 0, 0, 0, d("2026-05-27")],
+      ["Material Ordered", "JOB UPDATES", "#16a34a", false, 1, 0, 0, 0, d("2026-06-10")],
+      // REVIEWS & REFERRALS
+      ["Review Requests", "REVIEWS & REFERRALS", "#7c3aed", false, 16, 0, 0, 0, d("2026-05-27")],
+      ["Referral Requests", "REVIEWS & REFERRALS", "#16a34a", false, 13, 0, 0, 0, d("2026-06-03")],
+      // INSURANCE
+      ["Waiting On Insurance", "INSURANCE", "#1e3a8a", false, 7, 0, 0, 0, d("2026-05-27")],
+      ["No Damage", "INSURANCE", "#b45309", false, 26, 0, 0, 0, d("2026-05-27")],
+      ["Claim Approved", "INSURANCE", "#b45309", false, 2, 0, 0, 0, d("2026-05-27")],
+      ["Schedule Adjuster Meeting", "INSURANCE", "#1e3a8a", false, 7, 0, 0, 0, d("2026-06-04")],
+      ["Adjuster Scheduled Reminders", "INSURANCE", "#475569", false, 8, 0, 0, 0, d("2026-05-27")],
+      ["Adjuster Meeting Complete", "INSURANCE", "#16a34a", false, 1, 0, 0, 0, d("2026-06-10")],
+      ["Contingency Signed Next Steps", "INSURANCE", "#1e3a8a", false, 14, 0, 0, 0, d("2026-06-09")],
+    ];
+    storage.insertRaw("campaigns", rows.map(([name, section, color, active, steps, activeNow, runsThisWeek, totalRuns, lastUpdatedAt]) => ({
+      name, section, color, active, steps, activeNow, runsThisWeek, totalRuns, lastUpdatedAt,
+    })));
+    console.log("[backfill] seeded automation campaigns");
+  }
+
+  if (storage.countTriggers() === 0) {
+    const camps = storage.getCampaigns();
+    const cid = (name: string) => camps.find((c) => c.name === name)?.id ?? null;
+    type T = [string, string, string | null, string | null, any[]]; // [name, projectTriggerType, stage, startCampaignName, conditions]
+    const rows: T[] = [
+      ["No Stage", "Project Stage", "New Lead", null, []],
+      ["Other Event", "Event Type", null, null, []],
+      ["ESTIMATE SENT", "Project Stage", "Estimate Sent", "Other Follow-Up", []],
+      ["APPROVED", "Project Stage", "Approved", "Claim Approved", []],
+      ["SIGNED / WAITING ADJUSTER", "Project Stage", "Signed/Waiting on Adjuster", null, [{ "Project Type Is": "Insurance" }]],
+      ["MATERIALS ORDERED", "Project Stage", "Materials Ordered", "Materials Ordered", []],
+      ["READY FOR PRODUCTION", "Project Stage", "Ready for Production", "Order Materials Before Production", []],
+      ["JOB COMPLETE", "Project Stage", "Job Complete", "Job Completed", []],
+      ["INVOICE SENT", "Project Stage", "Invoice Sent", "Final Invoice Follow-Ups", []],
+      ["DEPOSIT INVOICED", "Project Stage", "Deposit Invoiced", "Deposit Invoice Follow-Ups", []],
+      ["CONTINGENCY SENT", "Project Stage", "Contingency Sent", "Contingency Follow-Up", []],
+      ["CREATING ESTIMATE", "Project Stage", "Creating Estimate", "Quote In Progress", []],
+      ["SEND BOOKING LINK", "Project Stage", "Sending Booking Link", "Booking Link", []],
+      ["JOB SCHEDULED", "Project Stage", "Job Scheduled", "Job Scheduled", []],
+      ["ADJUSTER SCHEDULED", "Project Stage", "Adjuster Scheduled", "Adjuster Scheduled Reminders", []],
+      ["Inspection", "Event Type", null, "Appt Reminders", [{ "Project Type Is": "Insurance" }]],
+      ["WAITING ON CARRIER", "Project Stage", "Waiting on Carrier", "Waiting On Insurance", []],
+      ["LEAD REHASH", "Project Stage", "Lead Rehash", "Roofing Lead Rehash", []],
+      ["NO DAMAGE", "Project Stage", "No Damage", "No Damage", []],
+      ["LOST", "Project Stage", "Lost", null, []],
+      ["PAID & CLOSED", "Project Stage", "Paid & Closed", null, []],
+    ];
+    storage.insertRaw("triggers", rows.map(([name, ptt, stage, startName, conditions]) => ({
+      triggerType: ptt === "Event Type" ? "Event" : "Project",
+      projectTriggerType: ptt,
+      name, stage,
+      active: false,
+      startCampaignId: startName ? cid(startName) : null,
+      stopAction: "Stop All Workflows For Project",
+      conditionGroupsJson: JSON.stringify(conditions.length ? [{ conditions: conditions[0] }] : []),
+    })));
+    console.log("[backfill] seeded workflow triggers");
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────────────

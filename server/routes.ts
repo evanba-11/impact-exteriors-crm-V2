@@ -199,6 +199,18 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   app.delete("/api/automations/:id", (req, res) => ok(res, storage.deleteAutomation(+req.params.id)));
   app.post("/api/automations/run", (_r, res) => { evaluateAutomations(); ok(res, { ran: true }); });
 
+  /* ───── Automation Campaigns (Update 9) ───── */
+  app.get("/api/campaigns", (_r, res) => ok(res, storage.getCampaigns()));
+  app.post("/api/campaigns", (req, res) => ok(res, storage.createCampaign(req.body)));
+  app.patch("/api/campaigns/:id", (req, res) => ok(res, storage.updateCampaign(+req.params.id, req.body)));
+  app.delete("/api/campaigns/:id", (req, res) => ok(res, storage.deleteCampaign(+req.params.id)));
+
+  /* ───── Workflow Triggers (Update 9) ───── */
+  app.get("/api/triggers", (_r, res) => ok(res, storage.getTriggers()));
+  app.post("/api/triggers", (req, res) => ok(res, storage.createTrigger(req.body)));
+  app.patch("/api/triggers/:id", (req, res) => ok(res, storage.updateTrigger(+req.params.id, req.body)));
+  app.delete("/api/triggers/:id", (req, res) => ok(res, storage.deleteTrigger(+req.params.id)));
+
   /* ───── Outbox ───── */
   app.get("/api/outbox", (_r, res) => ok(res, storage.getOutbox()));
 

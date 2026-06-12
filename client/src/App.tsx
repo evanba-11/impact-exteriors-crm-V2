@@ -17,6 +17,8 @@ import PriceList from "@/pages/PriceList";
 import Jobs from "@/pages/Jobs";
 import Financials from "@/pages/Financials";
 import Automations from "@/pages/Automations";
+import Campaigns from "@/pages/Campaigns";
+import Triggers from "@/pages/Triggers";
 import Tasks from "@/pages/Tasks";
 import Calendar from "@/pages/Calendar";
 import Vendors from "@/pages/Vendors";
@@ -40,7 +42,10 @@ function AppRouter() {
       <Route path="/price-list" component={PriceList} />
       <Route path="/jobs" component={Jobs} />
       <Route path="/financials" component={Financials} />
-      <Route path="/automations" component={Automations} />
+      <Route path="/automations/triggers" component={Triggers} />
+      <Route path="/automations/campaigns" component={Campaigns} />
+      <Route path="/automations/active" component={Automations} />
+      <Route path="/automations">{() => <Redirect to="/automations/triggers" />}</Route>
       <Route path="/tasks" component={Tasks} />
       <Route path="/calendar" component={Calendar} />
       <Route path="/vendors" component={Vendors} />

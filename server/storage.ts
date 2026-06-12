@@ -2,13 +2,13 @@ import {
   users, jobs, activities, priceItems, priceHistory, costCodes, estimates,
   templates, automations, automationRuns, outbox, budgets, commitments, costs,
   invoices, changeOrders, vendors, tasks, settings, internalMessages, mentionReads,
-  workOrders, materialReturns, materialReturnLines, issues,
+  workOrders, materialReturns, materialReturnLines, issues, campaigns, triggers,
 } from "@shared/schema";
 import type {
   User, Job, Activity, PriceItem, PriceHistory, CostCode, Estimate, Template,
   Automation, AutomationRun, Outbox, Budget, Commitment, Cost, Invoice,
   ChangeOrder, Vendor, Task, Settings, InternalMessage, WorkOrder,
-  MaterialReturn, MaterialReturnLine, Issue,
+  MaterialReturn, MaterialReturnLine, Issue, Campaign, Trigger,
 } from "@shared/schema";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
@@ -44,6 +44,8 @@ CREATE TABLE IF NOT EXISTS work_orders (id INTEGER PRIMARY KEY AUTOINCREMENT, jo
 CREATE TABLE IF NOT EXISTS material_returns (id INTEGER PRIMARY KEY AUTOINCREMENT, job_id INTEGER, status TEXT NOT NULL DEFAULT 'Pending', submitted_by TEXT, submitted_at INTEGER, approved_by TEXT, approved_at INTEGER, vendor_id INTEGER, total_return_value REAL NOT NULL DEFAULT 0, photos_json TEXT NOT NULL DEFAULT '[]', notes TEXT, created_at INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS material_return_lines (id INTEGER PRIMARY KEY AUTOINCREMENT, return_id INTEGER NOT NULL, item_id INTEGER, item_name TEXT NOT NULL, vendor_id INTEGER, qty REAL NOT NULL DEFAULT 0, unit TEXT NOT NULL DEFAULT 'EA', unit_rate REAL NOT NULL DEFAULT 0, line_value REAL NOT NULL DEFAULT 0, category TEXT);
 CREATE TABLE IF NOT EXISTS issues (id INTEGER PRIMARY KEY AUTOINCREMENT, job_id INTEGER, title TEXT NOT NULL, description TEXT, status TEXT NOT NULL DEFAULT 'Open', priority TEXT NOT NULL DEFAULT 'Normal', assignee_id INTEGER, created_by TEXT, created_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS campaigns (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, section TEXT NOT NULL, color TEXT NOT NULL DEFAULT '#475569', active INTEGER NOT NULL DEFAULT 0, steps INTEGER NOT NULL DEFAULT 0, active_now INTEGER NOT NULL DEFAULT 0, runs_this_week INTEGER NOT NULL DEFAULT 0, total_runs INTEGER NOT NULL DEFAULT 0, last_updated_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS triggers (id INTEGER PRIMARY KEY AUTOINCREMENT, trigger_type TEXT NOT NULL DEFAULT 'Project', project_trigger_type TEXT NOT NULL DEFAULT 'Project Stage', name TEXT NOT NULL, stage TEXT, active INTEGER NOT NULL DEFAULT 0, start_campaign_id INTEGER, stop_action TEXT NOT NULL DEFAULT 'Stop All Workflows For Project', condition_groups_json TEXT NOT NULL DEFAULT '[]');
 `);
 
 /* Update 6: add new job columns to existing DBs (idempotent). */
@@ -57,6 +59,9 @@ for (const col of [
   // Update 7
   "companycam_project_id TEXT", "companycam_created_at INTEGER",
   "pre_production_checklist_json TEXT NOT NULL DEFAULT '{}'",
+  // Update 9
+  "ready_for_prod_checklist_json TEXT NOT NULL DEFAULT '{}'",
+  "projected_completion_at INTEGER",
 ]) {
   try { sqlite.exec(`ALTER TABLE jobs ADD COLUMN ${col};`); } catch { /* already exists */ }
 }
@@ -126,6 +131,22 @@ class Storage {
   createAutomation(d: any) { return db.insert(automations).values(d).returning().get(); }
   updateAutomation(id: number, p: Partial<Automation>) { return db.update(automations).set(p).where(eq(automations.id, id)).returning().get(); }
   deleteAutomation(id: number) { return db.delete(automations).where(eq(automations.id, id)).run(); }
+
+  // campaigns (Update 9)
+  getCampaigns() { return db.select().from(campaigns).orderBy(asc(campaigns.id)).all(); }
+  getCampaign(id: number) { return db.select().from(campaigns).where(eq(campaigns.id, id)).get(); }
+  createCampaign(d: any) { return db.insert(campaigns).values({ lastUpdatedAt: now(), ...d }).returning().get(); }
+  updateCampaign(id: number, p: Partial<Campaign>) { return db.update(campaigns).set({ ...p, lastUpdatedAt: now() }).where(eq(campaigns.id, id)).returning().get(); }
+  deleteCampaign(id: number) { return db.delete(campaigns).where(eq(campaigns.id, id)).run(); }
+  countCampaigns() { return db.select().from(campaigns).all().length; }
+
+  // triggers (Update 9)
+  getTriggers() { return db.select().from(triggers).orderBy(asc(triggers.id)).all(); }
+  getTrigger(id: number) { return db.select().from(triggers).where(eq(triggers.id, id)).get(); }
+  createTrigger(d: any) { return db.insert(triggers).values(d).returning().get(); }
+  updateTrigger(id: number, p: Partial<Trigger>) { return db.update(triggers).set(p).where(eq(triggers.id, id)).returning().get(); }
+  deleteTrigger(id: number) { return db.delete(triggers).where(eq(triggers.id, id)).run(); }
+  countTriggers() { return db.select().from(triggers).all().length; }
 
   getAutomationRuns() { return db.select().from(automationRuns).all(); }
   addAutomationRun(d: any) { return db.insert(automationRuns).values({ firedAt: now(), ...d }).returning().get(); }
@@ -229,7 +250,7 @@ class Storage {
 
   // raw inserts for seeding
   insertRaw(table: string, rows: any[]) {
-    const map: any = { users, jobs, activities, priceItems, costCodes, estimates, templates, automations, outbox, budgets, commitments, costs, invoices, changeOrders, vendors, tasks, settings, internalMessages, workOrders, materialReturns, materialReturnLines, issues };
+    const map: any = { users, jobs, activities, priceItems, costCodes, estimates, templates, automations, outbox, budgets, commitments, costs, invoices, changeOrders, vendors, tasks, settings, internalMessages, workOrders, materialReturns, materialReturnLines, issues, campaigns, triggers };
     if (rows.length) db.insert(map[table]).values(rows).run();
   }
   countUsers() { return db.select().from(users).all().length; }

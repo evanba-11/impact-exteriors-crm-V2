@@ -59,6 +59,9 @@ export const jobs = sqliteTable("jobs", {
   companyCamProjectId: text("companycam_project_id"),        // placeholder integration id
   companyCamCreatedAt: integer("companycam_created_at"),     // when CompanyCam project was created
   preProductionChecklistJson: text("pre_production_checklist_json").notNull().default("{}"), // {colorsFinal,estimateCorrect,contactCorrect,depositReceived,supplementsAck}
+  // ── Update 9: Ready-for-Production gate ──
+  readyForProdChecklistJson: text("ready_for_prod_checklist_json").notNull().default("{}"), // {licenseValid,permitApproved,materialAllocated,buildDateVerified}
+  projectedCompletionAt: integer("projected_completion_at"),                                 // projected date of completion
 });
 
 /* ───────────────────────── Work Orders (Update 6) ───────────────────────── */
@@ -178,6 +181,33 @@ export const automations = sqliteTable("automations", {
   actionType: text("action_type").notNull(), // send_sms | send_email | create_task | notify | move_rehash
   templateId: integer("template_id"),
   active: integer("active", { mode: "boolean" }).notNull().default(true),
+});
+
+/* ───────────────────────── Automation Campaigns (workflows) — Update 9 ───────────────────────── */
+export const campaigns = sqliteTable("campaigns", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
+  section: text("section").notNull(), // SPEED-TO-LEAD | SALES FOLLOW-UP | JOB UPDATES | REVIEWS & REFERRALS | INSURANCE
+  color: text("color").notNull().default("#475569"), // tile icon color
+  active: integer("active", { mode: "boolean" }).notNull().default(false),
+  steps: integer("steps").notNull().default(0),
+  activeNow: integer("active_now").notNull().default(0),
+  runsThisWeek: integer("runs_this_week").notNull().default(0),
+  totalRuns: integer("total_runs").notNull().default(0),
+  lastUpdatedAt: integer("last_updated_at").notNull(),
+});
+
+/* ───────────────────────── Workflow Triggers — Update 9 ───────────────────────── */
+export const triggers = sqliteTable("triggers", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  triggerType: text("trigger_type").notNull().default("Project"), // Project | Job | Event
+  projectTriggerType: text("project_trigger_type").notNull().default("Project Stage"), // Project Stage | ...
+  name: text("name").notNull(), // stage or event name (display)
+  stage: text("stage"), // PROJECT STAGE value (when project stage trigger)
+  active: integer("active", { mode: "boolean" }).notNull().default(false),
+  startCampaignId: integer("start_campaign_id"), // workflow to start
+  stopAction: text("stop_action").notNull().default("Stop All Workflows For Project"),
+  conditionGroupsJson: text("condition_groups_json").notNull().default("[]"), // [{conditions:{...}}]
 });
 
 /* fired automations log — prevents re-firing the same rule for same job */
@@ -369,6 +399,8 @@ export const insertCostCodeSchema = createInsertSchema(costCodes).omit({ id: tru
 export const insertEstimateSchema = createInsertSchema(estimates).omit({ id: true });
 export const insertTemplateSchema = createInsertSchema(templates).omit({ id: true });
 export const insertAutomationSchema = createInsertSchema(automations).omit({ id: true });
+export const insertCampaignSchema = createInsertSchema(campaigns).omit({ id: true });
+export const insertTriggerSchema = createInsertSchema(triggers).omit({ id: true });
 export const insertOutboxSchema = createInsertSchema(outbox).omit({ id: true });
 export const insertBudgetSchema = createInsertSchema(budgets).omit({ id: true });
 export const insertCommitmentSchema = createInsertSchema(commitments).omit({ id: true });
@@ -392,6 +424,8 @@ export type CostCode = typeof costCodes.$inferSelect;
 export type Estimate = typeof estimates.$inferSelect;
 export type Template = typeof templates.$inferSelect;
 export type Automation = typeof automations.$inferSelect;
+export type Campaign = typeof campaigns.$inferSelect;
+export type Trigger = typeof triggers.$inferSelect;
 export type AutomationRun = typeof automationRuns.$inferSelect;
 export type Outbox = typeof outbox.$inferSelect;
 export type Budget = typeof budgets.$inferSelect;
@@ -502,3 +536,29 @@ export const STAGE_PROBABILITY: Record<string, number> = {
   "Waiting on Carrier": 0.55, "Approved": 0.9,
   "Waiting on Supplements": 0.7, "Supplements Approved": 0.92, "Pre-Production": 0.97,
 };
+
+/* ───── Update 9: Automations + Ready-for-Production ───── */
+// Campaign tile sections (display order on the Automation Campaigns page).
+export const CAMPAIGN_SECTIONS = ["SPEED-TO-LEAD", "SALES FOLLOW-UP", "JOB UPDATES", "REVIEWS & REFERRALS", "INSURANCE"] as const;
+
+// Trigger condition fields (the conditional dropdown rows in the Edit Workflow Trigger modal).
+export const TRIGGER_CONDITION_FIELDS = [
+  "Project Location Is", "Project Category Is", "Project Type Is",
+  "Lead Source Is", "Project Services Include", "Project Tags Include",
+] as const;
+export const TRIGGER_TYPES = ["Project", "Job", "Event"] as const;
+export const PROJECT_TRIGGER_TYPES = ["Project Stage", "Event Type"] as const;
+export const STOP_ACTIONS = ["Stop All Workflows For Project", "Don't Stop Workflows"] as const;
+
+// Required Ready-for-Production gate checkboxes (all must be checked to advance).
+export const READY_FOR_PROD_CHECKLIST = [
+  { key: "licenseValid", label: "License Valid" },
+  { key: "permitApproved", label: "Permit Approved" },
+  { key: "materialAllocated", label: "Material Allocated" },
+  { key: "buildDateVerified", label: "Build Date Verified" },
+] as const;
+
+// All distinct pipeline stages, in flow order, for the Jobs tile board.
+export const ALL_STAGES_ORDERED: string[] = Array.from(
+  new Set([...STAGES.SALES, ...STAGES.INSURANCE, ...STAGES.PRODUCTION, ...STAGES.BILLING])
+);
