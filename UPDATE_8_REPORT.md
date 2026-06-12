@@ -90,3 +90,35 @@ remaining gaps. Baseline `npm run build` passes before any changes.
 ## Files changed
 - **New:** `client/src/pages/CustomerMap.tsx`.
 - **Edited:** `client/src/pages/Tasks.tsx`, `client/src/pages/Estimates.tsx`, `client/src/pages/Jobs.tsx`, `client/src/pages/Leads.tsx`, `client/src/pages/RecordPage.tsx`, `client/src/App.tsx`, `client/src/components/Layout.tsx`.
+
+---
+
+# SPEC 9 — Second batch (ProLine CRM parity)
+
+Implemented on the same `update-8` branch, committed/pushed incrementally.
+
+## 1. Automations parent nav + three subpages
+- **Nav dropdown** (`client/src/components/Layout.tsx`): the "Automations" sidebar item is now a collapsible `NavParent` with children **Triggers**, **Automation Campaigns**, **Active Automations**. Mobile nav flattens the children; header breadcrumb resolves sub-routes.
+- **Routes** (`client/src/App.tsx`): `/automations/triggers` → `Triggers`, `/automations/campaigns` → `Campaigns`, `/automations/active` → `Automations`; bare `/automations` redirects to `/automations/triggers`.
+- **Automation Campaigns** (`client/src/pages/Campaigns.tsx`, NEW): section-grouped tile grid (SPEED-TO-LEAD / SALES FOLLOW-UP / JOB UPDATES / REVIEWS & REFERRALS / INSURANCE + OTHER bucket) with workflow counts. Each tile: colored icon square, UPPERCASE name, Active/Inactive dot badge, "Last updated:" date, delete/duplicate/toggle icon buttons, 2×2 stat grid (Steps, Active now, Runs this week, Total runs). "New Campaign" button.
+- **Triggers** (`client/src/pages/Triggers.tsx`, NEW): tile grid; each tile shows type label (Project Stage / Event Type), UPPERCASE name, Active/Inactive dot, IF/Start/Stop rows, and an "Extra condition sets" count chip.
+- **Edit Workflow Trigger modal** — **center-screen** shadcn `Dialog` (satisfies the "centered popup, not a side panel" requirement): Workflow Trigger Status switch; TRIGGER TYPE tab buttons (Project | Job | Event); Project Trigger Type select; Project Stage select; "IF these conditions are true" condition-group cards iterating the six condition fields with "Choose an option…" selects; "+ Add Dynamic Field Condition"; "Take the following actions" (Stop Action + Start Workflow selects); "Add Condition Group"; red Delete + Save.
+- **Active Automations** (`client/src/pages/Automations.tsx`): retitled the existing cadences/templates/outbox page header to "Active Automations" — it already lists enabled automation rules with active toggles + an outbox, matching the intent.
+- **Data layer:** new `campaigns` and `triggers` tables (`shared/schema.ts`), storage methods + DDL (`server/storage.ts`), REST CRUD routes (`server/routes.ts`), and idempotent `backfillUpdate9()` seed (`server/seed.ts`) of example campaigns and triggers.
+
+## 2. Jobs as pipeline-stage tiles
+- `client/src/pages/Jobs.tsx`: added a **Tiles / Table** view toggle. Tiles view groups active jobs into columns by production/billing pipeline stage (deduped, in flow order). Each `JobTile` carries **View Workorder**, **View Material Order**, and **Projected Date of Completion** buttons that open a detail dialog. Table view is preserved unchanged.
+
+## 3. Ready for Production gate
+- `client/src/pages/RecordPage.tsx`: when a record's Status is **Ready for Production**, an amber/green checklist card shows the four required checks — **License Valid, Permit Approved, Material Allocated, Build Date Verified**. The Status select is gated: advancing to any later production stage is blocked (destructive toast) until all four are checked. Checklist persists via the job's `readyForProdChecklistJson` column (added in the schema/storage ALTER loop).
+
+## 4. Siding Quick Template
+- `client/src/lib/templates.ts`: new `SIDING` `QuickTemplate` with all 10 spec sections and every line item/unit (Siding Removal & Disposal; Substrate Repair & Prep; Weather Barrier / Moisture Management; Siding — Hardie Board; Siding — LP SmartSide; Siding — Vinyl; Trim & Accessories; Soffit & Fascia; Flashing & Sealing; Miscellaneous / Additional Work). "Selector" lines (no unit in the spec) are modeled as EA roster lines. Added to `QUICK_TEMPLATES`; removed "Siding" from `CUSTOM_ONLY_JOB_TYPES` so the Siding job type binds to the template.
+
+## Build status (SPEC 9)
+- `npm run build`: **PASS** (vite client 2520 modules + esbuild server; only the standard >500 kB chunk advisory).
+- `tsc --noEmit`: clean for all SPEC 9 files. The only remaining errors are 3 pre-existing `client/src/lib/build-model.ts` `BuildLineKind` widenings that predate this branch (verified via `git stash`) and do not affect the build.
+
+## Files changed (SPEC 9)
+- **New:** `client/src/pages/Campaigns.tsx`, `client/src/pages/Triggers.tsx`.
+- **Edited:** `client/src/App.tsx`, `client/src/components/Layout.tsx`, `client/src/pages/Automations.tsx`, `client/src/pages/Jobs.tsx`, `client/src/pages/RecordPage.tsx`, `client/src/lib/templates.ts`, `shared/schema.ts`, `server/storage.ts`, `server/routes.ts`, `server/seed.ts`.
