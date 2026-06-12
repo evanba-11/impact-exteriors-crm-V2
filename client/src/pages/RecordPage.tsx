@@ -28,7 +28,8 @@ import { TeamFeed } from "@/components/JobDrawer";
 import { SegmentationBlock, type SegValues } from "@/components/Segmentation";
 import { WorkOrdersTab } from "@/components/WorkOrder";
 import { metricsFor } from "@/lib/record-derive";
-import { STAGES, STAKEHOLDER_ROLES } from "@shared/schema";
+import { STAGES, STAKEHOLDER_ROLES, READY_FOR_PROD_CHECKLIST } from "@shared/schema";
+import { Checkbox } from "@/components/ui/checkbox";
 import { JobTypeBadge } from "@/pages/Estimates";
 import { PreProductionChecklistDialog } from "@/pages/Leads";
 
@@ -95,6 +96,7 @@ function RecordPage({ id, kind }: { id: number | null; kind: "opportunity" | "jo
         stakeholders: safe(job.stakeholdersJson, {}),
         additionalContacts: safe(job.additionalContactsJson, []),
         salesSplit: safe(job.salesSplitJson, []),
+        readyForProdChecklist: safe(job.readyForProdChecklistJson, {}),
       });
     }
   }, [job]);
@@ -109,6 +111,7 @@ function RecordPage({ id, kind }: { id: number | null; kind: "opportunity" | "jo
       stakeholdersJson: JSON.stringify(draft.stakeholders),
       additionalContactsJson: JSON.stringify(draft.additionalContacts),
       salesSplitJson: JSON.stringify(draft.salesSplit),
+      readyForProdChecklistJson: JSON.stringify(draft.readyForProdChecklist),
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", id] });
@@ -126,6 +129,24 @@ function RecordPage({ id, kind }: { id: number | null; kind: "opportunity" | "jo
   const crumb = kind === "job" ? "Job" : "Opportunity";
 
   const setSeg = (v: SegValues) => setDraft({ ...draft, ...v });
+
+  // Ready-for-Production gate: all four checks must pass before advancing
+  // past "Ready for Production" to a later production stage.
+  const flowStages: string[] = STAGES[job.flow] || STAGES.SALES;
+  const rfpIndex = flowStages.indexOf("Ready for Production");
+  const showRfpGate = draft.stage === "Ready for Production" && rfpIndex >= 0;
+  const rfpComplete = READY_FOR_PROD_CHECKLIST.every((c) => !!draft.readyForProdChecklist?.[c.key]);
+  const toggleRfp = (key: string, v: boolean) =>
+    setDraft({ ...draft, readyForProdChecklist: { ...draft.readyForProdChecklist, [key]: v } });
+  const onStageChange = (v: string) => {
+    const targetIdx = flowStages.indexOf(v);
+    // block forward movement out of Ready for Production until all checks pass
+    if (draft.stage === "Ready for Production" && rfpIndex >= 0 && targetIdx > rfpIndex && !rfpComplete) {
+      toast({ title: "Complete the Ready for Production checklist", description: "All four items must be checked before advancing.", variant: "destructive" });
+      return;
+    }
+    setDraft({ ...draft, stage: v });
+  };
 
   return (
     <div className="space-y-4 max-w-5xl mx-auto pb-10">
@@ -208,14 +229,34 @@ function RecordPage({ id, kind }: { id: number | null; kind: "opportunity" | "jo
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Status</Label>
-                <Select value={draft.stage} onValueChange={(v) => setDraft({ ...draft, stage: v })}>
+                <Select value={draft.stage} onValueChange={onStageChange}>
                   <SelectTrigger data-testid="select-record-status"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {(STAGES[job.flow] || STAGES.SALES).map((s: string) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    {flowStages.map((s: string) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
             </div>
+
+            {/* Ready for Production gate */}
+            {showRfpGate && (
+              <div className={cn("rounded-lg border p-3 space-y-2.5", rfpComplete ? "border-emerald-500/40 bg-emerald-500/5" : "border-amber-500/40 bg-amber-500/5")} data-testid="rfp-gate">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-semibold">Ready for Production Checklist</Label>
+                  <span className={cn("text-xs font-medium", rfpComplete ? "text-emerald-600" : "text-amber-600")}>
+                    {rfpComplete ? "All checks complete" : "Required before advancing"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {READY_FOR_PROD_CHECKLIST.map((c) => (
+                    <label key={c.key} className="flex items-center gap-2 text-sm cursor-pointer" data-testid={`rfp-check-${c.key}`}>
+                      <Checkbox checked={!!draft.readyForProdChecklist?.[c.key]} onCheckedChange={(v) => toggleRfp(c.key, !!v)} />
+                      {c.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="text-xs text-muted-foreground">
               Created by {job.createdBy || "—"} · {dateTimeLabel(job.createdAt)}
             </div>
