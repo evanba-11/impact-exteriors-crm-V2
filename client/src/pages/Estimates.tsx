@@ -164,7 +164,7 @@ function EstimatesList({ jobs, estimates, user, navigate, setJobId }: any) {
       <div>
         <h3 className="text-sm font-semibold mb-2">Start a new estimate</h3>
         <div className="grid grid-cols-3 gap-2 max-md:grid-cols-1">
-          {jobs.filter((j) => ["SALES", "INSURANCE"].includes(j.flow) && !["Lost", "No Damage"].includes(j.stage)).slice(0, 9).map((j) => (
+          {jobs.filter((j: any) => ["SALES", "INSURANCE"].includes(j.flow) && !["Lost", "No Damage"].includes(j.stage)).slice(0, 9).map((j: any) => (
             <button key={j.id} onClick={() => setJobId(j.id)} className="text-left rounded-md border border-card-border bg-card p-3 hover-elevate" data-testid={`start-estimate-${j.id}`}>
               <div className="font-medium text-sm">{j.customer}</div>
               <div className="text-xs text-muted-foreground flex items-center gap-1.5"><JobTypeBadge jobType={j.jobType} /> · {j.stage}</div>
