@@ -1,0 +1,141 @@
+EXTERIOR PAINTING 
+
+SECTIONS (Parent Level)
+
+Surface Prep — Cleaning
+Surface Prep — Repair & Patching
+Surface Prep — Caulking & Sealing
+Surface Prep — Priming
+Surface Prep — Masking & Protection
+Siding — Paint Application
+Trim — Paint Application
+Doors & Windows — Paint Application
+Garage Doors — Paint Application
+Soffits & Fascia — Paint Application
+Gutters & Downspouts — Paint Application
+Deck / Porch — Paint Application
+Foundation & Masonry — Paint Application
+Miscellaneous / Additional Work
+
+
+LINE ITEMS PER SECTION
+1. Surface Prep — Cleaning
+
+Power wash — entire exterior — SF or Flat
+Power wash — deck / porch — SF
+Soft wash / low-pressure wash — SF
+Mold & mildew treatment / biocide application — SF
+Hand scrub / brush cleaning — HR
+
+
+2. Surface Prep — Repair & Patching
+
+Wood siding board replacement — LF or EA
+Lap siding repair (partial board) — LF
+T1-11 / panel siding repair — SF
+Hardboard siding repair / stabilization — SF
+Fiber cement siding repair — LF or EA
+Wood filler / epoxy fill (rot repair) — EA or HR
+Window trim board replacement — LF or EA
+Door trim board replacement — LF or EA
+Sand (bare wood / feather edges) — SF or HR
+
+
+3. Surface Prep — Caulking & Sealing
+
+Caulk — siding seams / butt joints — LF
+Caulk — window perimeter — EA or LF
+Caulk — door perimeter — EA or LF
+Caulk — trim to siding transitions — LF
+Caulk — corner boards — LF
+Caulk — penetrations (vents, pipes, fixtures) — EA
+Caulk — masonry / foundation cracks — LF
+Caulk — deck ledger / flashing joints — LF
+Backer rod installation (wide gaps) — LF
+Remove & replace failed caulk — LF
+
+
+4. Surface Prep — Priming
+
+Primer — bare wood (brush / roll) — SF
+Primer — bare wood (spray) — SF
+Primer — spot prime (repairs only) — SF or Flat
+Primer — full exterior (brush / roll) — SF
+Primer — full exterior (spray) — SF
+
+
+5. Surface Prep — Masking & Protection
+
+Mask windows — EA
+Mask doors — EA
+Mask light fixtures / outlets — EA
+Mask HVAC / mechanical — EA
+Plastic sheeting — landscaping / ground cover — SF or Flat
+Drop cloth setup — Flat
+Remove & reset shutters — EA
+Remove & reset light fixtures — EA
+Remove & reset house numbers / mailbox — EA
+Tarp / protect vehicles / hardscape — Flat
+
+
+6. Siding — Paint Application
+
+Paint — lap siding (brush / roll) — SF
+Paint — lap siding (spray + back-roll) — SF
+Paint — vertical siding / board & batten (brush / roll) — SF
+Paint — vertical siding (spray + back-roll) — SF
+Paint — fiber cement siding — SF
+Paint — cedar / wood shingle siding — SF
+Second coat — siding — SF
+Third coat — siding — SF
+
+
+7. Trim — Paint Application
+
+Paint — window trim (brush) — EA or LF
+Paint — door trim (brush) — EA or LF
+Paint — corner boards — LF
+Paint — rake board — LF
+Paint — band board / belly band — LF
+Paint — shutters (on structure) — EA
+Second coat — trim — LF or EA
+
+
+8. Doors & Windows — Paint Application
+
+Paint — entry door (exterior face) — EA
+Paint — entry door (both faces + jamb) — EA
+Paint — storm door — EA
+Paint — window sashes (exterior) — EA
+Second coat — doors — EA
+
+
+9. Garage Doors — Paint Application
+
+Paint — single garage door — EA
+Paint — double garage door — EA
+Paint — garage door trim / frame — EA
+Second coat — garage door — EA
+
+
+10. Soffits & Fascia — Paint Application
+
+Paint — fascia board (brush) — LF
+Paint — soffit (brush / roll) — SF
+Paint — soffit (spray) — SF
+Paint — beaded soffit / tongue & groove — SF
+Second coat — soffit & fascia — SF or LF
+
+
+11. Miscellaneous / Additional Work
+
+Two-story surcharge — SF or %
+Three-story surcharge — SF or %
+Difficult access / scaffolding — Flat or HR
+Scaffold rental — Day or Week
+Ladder assist — HR
+Color change surcharge (dark to light) — Flat or %
+Custom color / specialty finish — Flat
+Paint disposal fee — Flat
+Additional labor — HR
+Touch-up visit (post-project) — Flat

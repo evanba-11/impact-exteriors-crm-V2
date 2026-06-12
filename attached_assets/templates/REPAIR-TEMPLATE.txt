@@ -1,0 +1,150 @@
+REPAIR TEMPLATE 
+SECTIONS (Parent Level)
+
+Tear-Off & Disposal
+Decking Repair
+Underlayment
+Ice & Water Shield
+Shingles
+Ridge System
+Starter Strip
+Drip Edge
+Flashing
+Penetrations
+Ventilation
+Gutters & Accessories
+Fascia & Soffit
+Miscellaneous / Additional Work
+Emergency Services
+
+
+LINE ITEMS PER SECTION
+1. Tear-Off & Disposal
+
+Tear-off, single layer shingles — SQ
+Tear-off, double layer shingles — SQ
+Tear-off, triple layer shingles — SQ
+Tear-off, wood shake — SQ
+Dumpster / haul-off fee — Flat or SQ
+Dump fee overage — EA
+
+
+2. Decking Repair
+
+OSB decking replacement (7/16") — SF or Sheet
+Plywood decking replacement (5/8") — SF or Sheet
+
+
+3. Underlayment
+
+Synthetic underlayment — SQ
+High-temp underlayment (metal/tile applications) — SQ
+
+
+4. Ice & Water Shield
+
+Ice & water shield — standard — SQ
+Ice & water shield — high-temp — SQ
+Ice & water shield — valleys only — LF
+Ice & water shield — eaves only — LF
+Ice & water shield — full roof — SQ
+
+
+5. Shingles
+
+3-tab shingles — SQ
+Architectural shingles — SQ
+Impact-resistant shingles (Class 4) — SQ
+Designer / premium shingles — SQ
+Partial shingle replacement (repair section) — SQ or EA
+
+
+6. Ridge System
+
+Standard ridge cap shingles — LF or SQ
+High-profile ridge cap — LF
+Ridge vent (shingle-over) — LF
+
+
+7. Starter Strip
+
+Starter strip — eaves — LF
+Starter strip (wind warranty) — rakes — LF
+Starter strip — full perimeter — LF
+
+
+8. Drip Edge
+
+Gutter Apron — eaves — LF
+Drip edge — rakes — LF
+
+
+9. Flashing
+
+Step flashing — LF
+Counter flashing — LF
+Headwall / apron flashing — LF
+Valley flashing — open metal — LF
+Valley flashing — closed cut (material only) — LF
+Chimney flashing — base — LF
+Chimney flashing — counter / cap — LF
+Chimney cricket — EA
+Skylight flashing — EA
+Dormer flashing — LF
+Wall flashing — LF
+
+
+10. Penetrations
+
+Pipe boot / plumbing flashing (standard) — EA
+Pipe boot — high-temp — EA
+HVAC/Swamp Cooler curb flashing — EA
+Exhaust cap / hood — EA
+
+
+11. Ventilation
+
+Ridge vent — LF
+Box vent  — EA
+Soffit vent — EA
+Gable vent — EA
+Power attic vent — EA
+Intake vent (under-eave strip) — LF
+Broan Vent - EA
+
+
+12. Gutters & Accessories
+
+Gutter — 5" K-style — LF
+Gutter — 6" K-style — LF
+Gutter — half-round — LF
+Downspout — EA or LF
+Gutter guard / leaf protection — LF
+End caps — EA
+Rain Diverter — EA
+
+
+13. Fascia & Soffit
+
+Fascia board replacement — LF
+Fascia wrap (aluminum coil) — LF
+Soffit panel replacement — SF
+Soffit vent — EA
+
+
+14. Miscellaneous / Additional Work
+
+Caulking / sealant — LF or Flat
+Roofing cement / flashing sealant — EA
+Satellite dish removal & reset — EA
+Solar panel removal & reset — EA
+Permit fee — Flat
+Additional labor — HR
+
+
+15. Emergency Services
+
+Emergency tarp — SQ or Flat
+Tarp removal — Flat
+Emergency service call fee — Flat
+After-hours surcharge — %

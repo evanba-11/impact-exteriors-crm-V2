@@ -1,0 +1,284 @@
+COMMERCIAL SERVICE/ROOFING 
+
+SECTIONS (Parent Level)
+
+Mobilization & Access
+Tear-Off & Disposal
+Decking & Substrate Repair
+Insulation
+Cover Board
+Membrane — TPO
+Membrane — EPDM
+Membrane — PVC
+Membrane — Modified Bitumen
+Membrane — Built-Up Roofing (BUR)
+Flashings & Terminations
+Penetrations
+Drains & Drainage
+Skylights & Roof Hatches
+Sheet Metal & Copings
+Coatings & Restoration
+Miscellaneous / Additional Work
+
+
+LINE ITEMS PER SECTION
+1. Mobilization & Access
+
+Mobilization fee — Flat
+Demobilization fee — Flat
+Rooftop equipment staging — Flat
+Lift / scissor lift rental — Day or Week
+Crane rental — HR or Day
+Boom lift rental — Day
+Roof hatch access — EA
+Interior access coordination — HR
+Safety / fall protection setup — Flat
+Traffic control / cone setup — Flat
+Permitting coordination fee — Flat
+
+
+2. Tear-Off & Disposal
+
+Tear-off — single-ply membrane (TPO/EPDM/PVC) — SQ
+Tear-off — modified bitumen (1 layer) — SQ
+Tear-off — modified bitumen (2 layer) — SQ
+Tear-off — built-up roofing (BUR) — SQ
+Tear-off — gravel ballast — SQ
+Tear-off — insulation — SQ
+Tear-off — cover board — SQ
+Tear-off — metal panel roofing — SQ
+Partial tear-off / cut-out (repair area) — SF
+Dumpster fee — Flat
+Haul-off / dump fee — Flat
+Hazardous material (asbestos) testing — Flat
+Asbestos abatement — SQ (sub note)
+
+
+3. Decking & Substrate Repair
+
+Steel deck repair / replacement — SF
+Steel deck rescrewing / refastening — SF
+Concrete deck repair — SF
+Wood decking replacement (OSB/plywood) — SF or Sheet
+Lightweight concrete repair — SF
+Gypsum deck repair — SF
+Structural repair (sub note / engineer required) — EA
+Wet insulation removal & replacement — SF
+Core cut / moisture scan — EA or Flat
+Infrared scan (moisture survey) — SQ or Flat
+
+
+4. Insulation
+
+Polyisocyanurate (polyiso) insulation — 2" — SQ
+Polyisocyanurate (polyiso) insulation — 3" — SQ
+Polyisocyanurate (polyiso) insulation — 4" — SQ
+EPS insulation — SQ
+XPS insulation — SQ
+Tapered insulation system — SQ
+Tapered insulation — crickets / saddles — EA
+Insulation fasteners & plates — SQ
+Insulation adhesive (low-rise foam) — SQ
+Recover board over existing insulation — SQ
+
+
+5. Cover Board
+
+1/2" gypsum cover board — SQ
+5/8" gypsum cover board — SQ
+1/4" DensDeck / glass mat — SQ
+1/2" DensDeck — SQ
+Wood fiber cover board — SQ
+Perlite cover board — SQ
+Cover board fasteners & plates — SQ
+Cover board adhesive — SQ
+
+
+6. Membrane — TPO
+
+TPO membrane — 45 mil — SQ
+TPO membrane — 60 mil — SQ
+TPO membrane — 80 mil — SQ
+TPO — mechanically attached — SQ
+TPO — fully adhered — SQ
+TPO — ballasted — SQ
+TPO seam weld (repair) — LF
+TPO seam weld (new) — LF
+TPO patch — EA or SF
+TPO walkpad — EA or LF
+TPO membrane warranty registration — Flat
+
+
+7. Membrane — EPDM
+
+EPDM membrane — 45 mil — SQ
+EPDM membrane — 60 mil — SQ
+EPDM membrane — 90 mil — SQ
+EPDM — mechanically attached — SQ
+EPDM — fully adhered — SQ
+EPDM — ballasted — SQ
+EPDM splice tape repair — LF
+EPDM lap sealant — LF
+EPDM patch — EA or SF
+EPDM walkpad — EA or LF
+EPDM seam primer — LF
+
+
+8. Membrane — PVC
+
+PVC membrane — 50 mil — SQ
+PVC membrane — 60 mil — SQ
+PVC membrane — 80 mil — SQ
+PVC — mechanically attached — SQ
+PVC — fully adhered — SQ
+PVC seam weld (repair) — LF
+PVC seam weld (new) — LF
+PVC patch — EA or SF
+PVC walkpad — EA or LF
+PVC membrane warranty registration — Flat
+
+
+9. Membrane — Modified Bitumen
+
+Mod bit — APP torch-down (base sheet) — SQ
+Mod bit — APP torch-down (cap sheet) — SQ
+Mod bit — SBS cold-applied (base sheet) — SQ
+Mod bit — SBS cold-applied (cap sheet) — SQ
+Mod bit — self-adhered base sheet — SQ
+Mod bit — self-adhered cap sheet — SQ
+Mod bit — granule surface cap — SQ
+Mod bit — smooth surface cap — SQ
+Mod bit patch (torch) — EA or SF
+Mod bit patch (cold-applied) — EA or SF
+Mod bit blister repair — EA
+Mod bit seam re-seal — LF
+
+
+10. Membrane — Built-Up Roofing (BUR)
+
+BUR — 3-ply — SQ
+BUR — 4-ply — SQ
+BUR — gravel surface — SQ
+BUR — smooth surface — SQ
+BUR — base sheet — SQ
+Flood coat & gravel — SQ
+BUR blister repair — EA
+BUR patch — SF
+BUR re-coat / rejuvenation — SQ
+
+
+11. Flashings & Terminations
+
+Base flashing — TPO/PVC/EPDM — LF
+Base flashing — mod bit — LF
+Counter flashing — LF
+Termination bar — LF
+Termination bar sealant — LF
+Wall flashing — LF
+Coping cap flashing — LF
+Reglet flashing — LF
+Pitch pocket — EA
+Pitch pocket fill — EA
+Expansion joint cover — LF
+Expansion joint replacement — LF
+Parapet wall flashing — LF
+Through-wall flashing — LF
+Edge metal / fascia — LF
+Gravel stop — LF
+
+
+12. Penetrations
+
+Pipe boot — standard — EA
+Pipe boot — high-temp — EA
+Pipe boot — fabricated metal — EA
+Pipe boot — oversized — EA
+HVAC curb flashing — EA
+HVAC curb replacement — EA
+Exhaust cap / hood — EA
+Gas line penetration flashing — EA
+Conduit / electrical penetration — EA
+Support pad / equipment pad — EA
+Roof drain flashing — EA
+Overflow drain flashing — EA
+Vent stack flashing — EA
+Guy wire anchor flashing — EA
+
+
+13. Drains & Drainage
+
+Roof drain strainer / dome replacement — EA
+Roof drain body replacement — EA
+Roof drain collar / flashing — EA
+Overflow drain installation — EA
+Overflow drain replacement — EA
+Scupper installation — EA
+Scupper flashing — EA
+Scupper screen — EA
+Interior drain line flush / clear — EA
+Tapered insulation to drain (cricket) — EA
+Drain extension / sump — EA
+Standing water remediation — Flat or HR
+
+
+14. Skylights & Roof Hatches
+
+Skylight reseal / reflash — EA
+Skylight curb reflash — EA
+Skylight replacement — fixed — EA
+Skylight replacement — venting — EA
+Skylight curb rebuild — EA
+Roof hatch reseal / reflash — EA
+Roof hatch replacement — EA
+Roof hatch closer / hardware — EA
+Smoke vent reseal — EA
+Smoke vent replacement — EA
+
+
+15. Sheet Metal & Copings
+
+Coping cap — aluminum — LF
+Coping cap — galvanized steel — LF
+Coping cap — stainless steel — LF
+Coping cap — copper — LF
+Coping cap joint / splice — EA
+Coping cap end piece — EA
+Coping cleat — LF
+Edge metal — LF
+Gravel stop — LF
+Fascia metal — LF
+Counter flashing — LF
+Custom sheet metal fabrication — LF or HR
+Sheet metal sealant / joint — LF
+
+
+16. Coatings & Restoration
+
+Roof coating — silicone — SQ
+Roof coating — acrylic — SQ
+Roof coating — polyurethane — SQ
+Roof coating — aluminum / asphalt — SQ
+Primer coat — SQ
+Second coat — SQ
+Seam reinforcement fabric — LF or SQ
+Flashing reinforcement fabric — LF
+Surface cleaning / prep prior to coating — SQ
+Coating warranty registration — Flat
+Ponding water assessment / remediation — Flat
+
+
+17. Miscellaneous / Additional Work
+
+Permit fee — Flat
+Re-inspection fee — Flat
+After-hours / weekend surcharge — % or Flat
+Emergency service call fee — Flat
+Roof survey / condition report — Flat
+Core cut analysis — EA
+Infrared moisture scan — SQ or Flat
+Engineer / consultant coordination — HR
+Temporary roof repair / tarp — SF or Flat
+Interior damage assessment (sub note) — Flat
+Warranty extension / maintenance agreement — Flat
+Travel surcharge — Flat or HR
+Additional labor — HR

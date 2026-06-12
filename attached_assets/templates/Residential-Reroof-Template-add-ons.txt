@@ -1,0 +1,31 @@
+Residential Reroof Template add-ons 
+
+Also all "product Selections" need to be drop downs with the options listed, even if there is only 1 option. Also you didn't add a drop down for OSB thickness options
+
+In the FLASHINGS section please add below
+
+Counter flashing — LF
+Headwall / apron flashing — LF
+Chimney flashing — base — LF
+Chimney flashing — counter / cap — LF
+Dormer flashing — LF
+Wall flashing — LF
+Kick-out flashing — EA
+
+In the Boots, Vents, etc section please add section please add below
+
+Ridge vent — LF
+Gable vent — EA
+Deck Air Intake - EA
+
+
+In the Miscellaneous Section / Additional Work
+
+Dumpster fee — Flat
+Haul-off / dump fee — Flat
+Dump fee overage — EA
+Antenna removal — EA
+Scaffold rental — Day or Week
+Caulking / sealant — LF or Flat
+Satellite dish removal only (no reset) — EA
+Additional labor — HR
