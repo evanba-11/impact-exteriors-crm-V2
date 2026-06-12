@@ -43,8 +43,9 @@ export default function Jobs() {
     sortValue: (j, k) => {
       const w = wipById[j.id];
       return k === "contract" ? (j.contractValue || j.value || 0)
+        : k === "billings" ? (w?.billed ?? 0)
         : k === "cost" ? (w?.costToDate ?? w?.cost ?? 0)
-        : k === "complete" ? (w?.percentComplete ?? 0)
+        : k === "complete" ? (w?.percentComplete ?? w?.pctComplete ?? 0)
         : k === "margin" ? (w?.margin ?? -Infinity)
         : k === "stage" ? j.stage
         : k === "updated" ? (j.lastActivityAt || 0)
@@ -53,11 +54,11 @@ export default function Jobs() {
   }), [scoped, state, wipById, users, user]);
 
   const doExport = () => exportCsv("jobs.csv",
-    ["Customer", "Address", "Type", "Stage", "PM / Rep", "Contract", "Cost To Date", "% Complete", "Margin %"],
+    ["Customer", "Address", "Type", "Stage", "PM / Rep", "Contract", "Billings", "Cost To Date", "% Complete", "Margin %"],
     list.map((j) => {
       const w = wipById[j.id];
       return [j.customer, j.address || "", j.jobType || "", j.stage, repName(j.repId),
-        j.contractValue || j.value || 0, w?.costToDate ?? w?.cost ?? "", w ? w.percentComplete : "", w ? w.margin : ""];
+        j.contractValue || j.value || 0, w?.billed ?? "", w?.costToDate ?? w?.cost ?? "", w ? (w.percentComplete ?? w.pctComplete ?? "") : "", w ? (w.margin ?? w.projMargin ?? "") : ""];
     }));
 
   return (
@@ -94,6 +95,7 @@ export default function Jobs() {
                 <TableHead className="hidden lg:table-cell"><SortHead label="Stage" sortKey="stage" state={state} onSort={toggleSort} /></TableHead>
                 <TableHead className="hidden sm:table-cell">PM / Rep</TableHead>
                 <TableHead className="text-right"><SortHead label="Contract" sortKey="contract" state={state} onSort={toggleSort} align="right" /></TableHead>
+                <TableHead className="text-right hidden lg:table-cell"><SortHead label="Billings" sortKey="billings" state={state} onSort={toggleSort} align="right" /></TableHead>
                 <TableHead className="text-right hidden lg:table-cell"><SortHead label="Cost" sortKey="cost" state={state} onSort={toggleSort} align="right" /></TableHead>
                 <TableHead className="text-right hidden md:table-cell"><SortHead label="% Complete" sortKey="complete" state={state} onSort={toggleSort} align="right" /></TableHead>
                 <TableHead className="text-right"><SortHead label="Margin" sortKey="margin" state={state} onSort={toggleSort} align="right" /></TableHead>
@@ -118,13 +120,16 @@ export default function Jobs() {
                     <TableCell className="hidden sm:table-cell text-sm">{repName(j.repId)}</TableCell>
                     <TableCell className="text-right tnum font-medium">{money(j.contractValue || j.value)}</TableCell>
                     <TableCell className="text-right tnum hidden lg:table-cell text-muted-foreground">
+                      {w ? money(w.billed ?? 0) : "—"}
+                    </TableCell>
+                    <TableCell className="text-right tnum hidden lg:table-cell text-muted-foreground">
                       {w ? money(w.costToDate ?? w.cost ?? 0) : "—"}
                     </TableCell>
                     <TableCell className="text-right tnum hidden md:table-cell">
-                      {w ? pct(w.percentComplete) : "—"}
+                      {w ? pct((w.percentComplete ?? w.pctComplete ?? 0)) : "—"}
                     </TableCell>
-                    <TableCell className={`text-right tnum font-medium ${w ? marginColor(w.margin) : ""}`}>
-                      {w ? pct(w.margin, 1) : "—"}
+                    <TableCell className={`text-right tnum font-medium ${w ? marginColor(w.margin ?? w.projMargin ?? 0) : ""}`}>
+                      {w ? pct(w.margin ?? w.projMargin ?? 0, 1) : "—"}
                     </TableCell>
                     <TableCell className="hidden xl:table-cell text-right text-xs text-muted-foreground">
                       {timeAgo(j.lastActivityAt)}

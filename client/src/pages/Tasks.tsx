@@ -12,19 +12,25 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useMemo } from "react";
 import { useApp } from "@/lib/app-context";
 import { DAY } from "@/lib/format";
 import { Plus, CalendarClock, CheckCircle2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { Task, Job, User } from "@shared/schema";
+import { useListView, applyList, exportCsv, ListToolbar } from "@/components/ListView";
+
+const STATUS_FILTERS = [
+  { key: "open", label: "Open" },
+  { key: "done", label: "Completed" },
+  { key: "all", label: "All" },
+];
 
 export default function Tasks() {
   const { user } = useApp();
   const { data: tasks = [], isLoading } = useQuery<Task[]>({ queryKey: ["/api/tasks"] });
   const { data: jobs = [] } = useQuery<Job[]>({ queryKey: ["/api/jobs"] });
   const { data: users = [] } = useQuery<User[]>({ queryKey: ["/api/users"] });
-  const [tab, setTab] = useState("open");
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const jobName = (id: number | null) => jobs.find((j) => j.id === id)?.customer;
@@ -42,13 +48,26 @@ export default function Tasks() {
     },
   });
 
-  const filtered = useMemo(() => {
-    let list = [...tasks];
-    if (tab === "open") list = list.filter((t) => !t.done);
-    if (tab === "done") list = list.filter((t) => t.done);
-    if (tab === "mine") list = list.filter((t) => t.assigneeId === user?.id && !t.done);
-    return list.sort((a, b) => (a.dueAt || Infinity) - (b.dueAt || Infinity));
-  }, [tasks, tab, user]);
+  const { state, setQ, setMine, setFilter } = useListView("tasks", { filters: { status: "open" } });
+  const status = state.filters.status || "open";
+
+  const filtered = useMemo(() => applyList(tasks, state, {
+    searchText: (t) => `${t.title} ${userName(t.assigneeId)} ${jobName(t.jobId) || ""}`,
+    isMine: (t) => t.assigneeId === user?.id,
+    filterMatch: (t, f) => {
+      const st = f.status || "open";
+      if (st === "open" && t.done) return false;
+      if (st === "done" && !t.done) return false;
+      return true;
+    },
+    sortValue: (t) => (t.dueAt || Infinity),
+  }).sort((a, b) => (a.dueAt || Infinity) - (b.dueAt || Infinity)),
+  [tasks, state, user, users, jobs]);
+
+  const doExport = () => exportCsv("tasks.csv",
+    ["Title", "Assignee", "Job", "Type", "Due", "Done"],
+    filtered.map((t) => [t.title, userName(t.assigneeId), jobName(t.jobId) || "", t.type || "task",
+      t.dueAt ? new Date(t.dueAt).toLocaleDateString() : "", t.done ? "yes" : "no"]));
 
   const dueLabel = (ts: number | null) => {
     if (!ts) return { text: "No due date", cls: "text-muted-foreground" };
@@ -68,13 +87,25 @@ export default function Tasks() {
         actions={<NewTaskDialog open={dialogOpen} setOpen={setDialogOpen} jobs={jobs} users={users} defaultAssignee={user?.id ?? null} onSubmit={(b) => create.mutate(b)} pending={create.isPending} />}
       />
 
-      <Tabs value={tab} onValueChange={setTab}>
-        <TabsList data-testid="tabs-tasks">
-          <TabsTrigger value="open" data-testid="tab-open">Open</TabsTrigger>
-          <TabsTrigger value="mine" data-testid="tab-mine">Mine</TabsTrigger>
-          <TabsTrigger value="done" data-testid="tab-done">Completed</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <ListToolbar
+        q={state.q} onQ={setQ}
+        mine={state.mine} onMine={setMine}
+        onExport={doExport}
+        placeholder="Search tasks…"
+        count={filtered.length} total={tasks.length}
+        extra={
+          <div className="flex rounded-lg border border-border overflow-hidden" data-testid="tasks-status-filter">
+            {STATUS_FILTERS.map((s) => (
+              <button
+                key={s.key}
+                onClick={() => setFilter("status", s.key)}
+                className={cn("px-2.5 py-1.5 text-sm", status === s.key ? "bg-primary text-primary-foreground" : "hover:bg-accent")}
+                data-testid={`tab-${s.key}`}
+              >{s.label}</button>
+            ))}
+          </div>
+        }
+      />
 
       <div className="rounded-xl border border-border bg-card divide-y divide-border">
         {isLoading ? (

@@ -107,6 +107,7 @@ export default function Leads() {
         : k === "value" ? (j.value || 0)
         : k === "score" ? (j.leadScore || 0)
         : k === "bid" ? (finFor.get(j.id)?.bid || 0)
+        : k === "cost" ? ((finFor.get(j.id)?.labor || 0) + (finFor.get(j.id)?.material || 0))
         : k === "margin" ? (finFor.get(j.id)?.margin || 0)
         : k === "created" ? (j.createdAt || 0)
         : j.customer,
@@ -133,11 +134,11 @@ export default function Leads() {
   });
 
   const doExport = () => exportCsv("impact-opportunities.csv",
-    ["Customer", "Phone", "Address", "Source", "Type", "Flow", "Stage", "Created By", "Value", "Bid", "Margin", "GPM%", "Score", "Rep"],
+    ["Customer", "Phone", "Address", "Source", "Type", "Flow", "Stage", "Created By", "Contract", "Bid", "Cost", "Margin", "GPM%", "Score", "Rep"],
     filtered.map((j) => {
       const m = finFor.get(j.id);
       return [j.customer, j.phone || "", j.address || "", j.source || "", j.jobType || "", j.flow, j.stage,
-        j.createdBy || "", j.value || 0, m?.bid || 0, m?.margin || 0, m ? m.gpm.toFixed(1) : "", j.leadScore || 0, repName(j.repId)];
+        j.createdBy || "", j.value || 0, m?.bid || 0, m ? (m.labor + m.material) : 0, m?.margin || 0, m ? m.gpm.toFixed(1) : "", j.leadScore || 0, repName(j.repId)];
     }));
 
   const missingSeg = (j: Job) => SEG_TRACKED.filter((f) => !(j as any)[f.key]).map((f) => f.label);
@@ -215,6 +216,7 @@ export default function Leads() {
                 <TableHead className="hidden sm:table-cell">Created By</TableHead>
                 <TableHead className="text-right"><SortHead label="Contract" sortKey="value" state={state} onSort={toggleSort} align="right" /></TableHead>
                 <TableHead className="text-right hidden lg:table-cell"><SortHead label="Bid" sortKey="bid" state={state} onSort={toggleSort} align="right" /></TableHead>
+                <TableHead className="text-right hidden xl:table-cell"><SortHead label="Cost" sortKey="cost" state={state} onSort={toggleSort} align="right" /></TableHead>
                 <TableHead className="text-right hidden lg:table-cell"><SortHead label="Margin" sortKey="margin" state={state} onSort={toggleSort} align="right" /></TableHead>
                 <TableHead className="text-center"><SortHead label="Score" sortKey="score" state={state} onSort={toggleSort} align="center" /></TableHead>
                 <TableHead className="hidden xl:table-cell text-right">Activity</TableHead>
@@ -248,6 +250,7 @@ export default function Leads() {
                     </TableCell>
                     <TableCell className="text-right tnum font-medium">{money(j.value)}</TableCell>
                     <TableCell className="text-right tnum hidden lg:table-cell">{m ? money(m.bid) : "—"}</TableCell>
+                    <TableCell className="text-right tnum hidden xl:table-cell text-muted-foreground">{m ? money(m.labor + m.material) : "—"}</TableCell>
                     <TableCell className={cn("text-right tnum hidden lg:table-cell", m && marginColor(m.gpm))}>{m ? money(m.margin) : "—"}</TableCell>
                     <TableCell className="text-center"><ScoreBadge score={{ total: j.leadScore || 0, breakdown: [] }} /></TableCell>
                     <TableCell className="hidden xl:table-cell text-right text-xs text-muted-foreground">{timeAgo(j.lastActivityAt)}</TableCell>

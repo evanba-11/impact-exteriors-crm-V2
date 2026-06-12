@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { money, money2, pct, marginColor } from "@/lib/format";
 import { useApp } from "@/lib/app-context";
 import { useToast } from "@/hooks/use-toast";
+import { useListView, applyList, exportCsv, ListToolbar, SortHead } from "@/components/ListView";
+import { metricsFor } from "@/lib/record-derive";
 import {
   SHINGLE_OPTIONS, TAX_JURISDICTIONS, DEFAULT_MARGIN,
   defaultJobInput, defaultExtras, calcEstimateV3,
@@ -69,25 +71,83 @@ export default function Estimates() {
 
   if (jobId) return <Builder jobId={jobId} jobs={jobs} priceItems={priceItems} settings={settings} user={user} onBack={() => setJobId(null)} />;
 
+  return <EstimatesList jobs={jobs} estimates={estimates} user={user} navigate={navigate} setJobId={setJobId} />;
+}
+
+function EstimatesList({ jobs, estimates, user, navigate, setJobId }: any) {
+  const { state, setQ, setMine, toggleSort } = useListView("estimates", { sortKey: "customer", sortDir: "asc" });
+
+  const finFor = useMemo(() => {
+    const map = new Map<number, { labor: number; material: number; bid: number; margin: number; gpm: number }>();
+    for (const e of estimates) {
+      const j = jobs.find((x: any) => x.id === e.jobId);
+      try { map.set(e.id, metricsFor(e, e.jobType || j?.jobType || "Residential Re-Roof")); } catch { /* ignore */ }
+    }
+    return map;
+  }, [estimates, jobs]);
+
+  const jobFor = (e: any) => jobs.find((x: any) => x.id === e.jobId);
+  const totalOf = (e: any) => e.totalPrice || jobFor(e)?.value || 0;
+
+  const list = useMemo(() => applyList(estimates, state, {
+    searchText: (e: any) => `${jobFor(e)?.customer || ""} ${e.jobType || ""} ${e.status || ""}`,
+    isMine: (e: any) => jobFor(e)?.repId === user?.id,
+    sortValue: (e: any, k: string) => {
+      const m = finFor.get(e.id);
+      return k === "contract" ? totalOf(e)
+        : k === "cost" ? ((m?.labor || 0) + (m?.material || 0))
+        : k === "margin" ? (m?.margin || 0)
+        : k === "status" ? (e.status || "")
+        : jobFor(e)?.customer || "";
+    },
+  }), [estimates, state, jobs, finFor, user]);
+
+  const doExport = () => exportCsv("estimates.csv",
+    ["Customer", "Mode", "Job Type", "Status", "Contract", "Cost", "Margin", "GPM%"],
+    list.map((e: any) => {
+      const m = finFor.get(e.id);
+      return [jobFor(e)?.customer || "", e.mode === "advanced" || e.mode === "custom" ? "Custom" : "Quick",
+        e.jobType || jobFor(e)?.jobType || "", e.status || "", totalOf(e),
+        m ? (m.labor + m.material) : "", m?.margin ?? "", m ? m.gpm.toFixed(1) : ""];
+    }));
+
   return (
     <div className="p-6 space-y-4">
       <PageHeader title="Estimates" subtitle="Full estimate workspace · Build · Financials · Proposal · ABC Price Agreement pricing" />
-      <div className="rounded-lg border border-card-border bg-card overflow-hidden">
+      <ListToolbar
+        q={state.q} onQ={setQ}
+        mine={state.mine} onMine={setMine}
+        onExport={doExport}
+        placeholder="Search estimates…"
+        count={list.length} total={estimates.length}
+      />
+      <div className="rounded-lg border border-card-border bg-card overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-xs text-muted-foreground">
-            <tr><th className="text-left p-3">Customer</th><th className="text-left p-3">Mode</th><th className="text-left p-3">Job Type</th><th className="text-left p-3">Status</th><th className="text-right p-3">Contract Total</th><th></th><th></th></tr>
+            <tr>
+              <th className="text-left p-3"><SortHead label="Customer" sortKey="customer" state={state} onSort={toggleSort} /></th>
+              <th className="text-left p-3">Mode</th>
+              <th className="text-left p-3">Job Type</th>
+              <th className="text-left p-3"><SortHead label="Status" sortKey="status" state={state} onSort={toggleSort} /></th>
+              <th className="text-right p-3"><SortHead label="Contract" sortKey="contract" state={state} onSort={toggleSort} align="right" /></th>
+              <th className="text-right p-3 hidden lg:table-cell"><SortHead label="Cost" sortKey="cost" state={state} onSort={toggleSort} align="right" /></th>
+              <th className="text-right p-3 hidden lg:table-cell"><SortHead label="Margin" sortKey="margin" state={state} onSort={toggleSort} align="right" /></th>
+              <th></th><th></th>
+            </tr>
           </thead>
           <tbody>
-            {estimates.map((e) => {
-              const j = jobs.find((x) => x.id === e.jobId);
-              const total = e.totalPrice || j?.value || 0;
+            {list.map((e: any) => {
+              const j = jobFor(e);
+              const m = finFor.get(e.id);
               return (
                 <tr key={e.id} className="border-t border-border hover-elevate cursor-pointer" onClick={() => setJobId(e.jobId)} data-testid={`row-estimate-${e.id}`}>
                   <td className="p-3 font-medium">{j?.customer || "—"}</td>
                   <td className="p-3"><Badge variant="outline">{e.mode === "advanced" || e.mode === "custom" ? "Custom" : "Quick"}</Badge></td>
                   <td className="p-3"><JobTypeBadge jobType={e.jobType || j?.jobType || "Residential Re-Roof"} /></td>
                   <td className="p-3"><Badge variant="outline" className={e.status === "accepted" ? "bg-emerald-500/15 text-emerald-600" : e.status === "sent" ? "bg-blue-500/15 text-blue-500" : ""}>{e.status}</Badge></td>
-                  <td className="p-3 text-right tnum font-semibold">{money(total)}</td>
+                  <td className="p-3 text-right tnum font-semibold">{money(totalOf(e))}</td>
+                  <td className="p-3 text-right tnum hidden lg:table-cell text-muted-foreground">{m ? money(m.labor + m.material) : "—"}</td>
+                  <td className={cn("p-3 text-right tnum hidden lg:table-cell", m && marginColor(m.gpm))}>{m ? money(m.margin) : "—"}</td>
                   <td className="p-3 text-right">
                     <Button size="sm" variant="outline" className="h-7" data-testid={`button-generate-proposal-${e.id}`}
                       onClick={(ev) => { ev.stopPropagation(); navigate(`/proposals/${e.id}`); }}>

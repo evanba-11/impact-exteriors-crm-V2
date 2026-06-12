@@ -32,6 +32,10 @@ import { STAGES, STAKEHOLDER_ROLES } from "@shared/schema";
 import { JobTypeBadge } from "@/pages/Estimates";
 import { PreProductionChecklistDialog } from "@/pages/Leads";
 
+// Labor-budget benchmark: an estimate's labor share of bid at/under this target
+// is "meeting or beating" the labor plan (green); above it is "behind" (red).
+const LABOR_TARGET_PCT = 35;
+
 function dateLabel(ts?: number) {
   if (!ts) return "";
   return new Date(ts).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "2-digit" });
@@ -360,6 +364,7 @@ function RecordPage({ id, kind }: { id: number | null; kind: "opportunity" | "jo
                     <th className="text-right p-2.5">Total Cost</th>
                     <th className="text-right p-2.5">Margin</th>
                     <th className="text-right p-2.5">GPM</th>
+                    <th className="text-right p-2.5" title="Labor share of bid vs the 35% labor target — green meets/beats target, red is behind">Labor %</th>
                     <th className="text-right p-2.5">Status</th>
                   </tr>
                 </thead>
@@ -367,6 +372,8 @@ function RecordPage({ id, kind }: { id: number | null; kind: "opportunity" | "jo
                   {jobEstimates.map((e) => {
                     const em = metricsFor(e, e.jobType || jobType);
                     const cost = em.labor + em.material;
+                    const laborPct = em.bid > 0 ? (em.labor / em.bid) * 100 : 0;
+                    const meetsLabor = laborPct <= LABOR_TARGET_PCT;
                     return (
                       <tr key={e.id} className="border-t border-border hover:bg-accent cursor-pointer" onClick={() => navigate(`/proposals/${e.id}`)} data-testid={`estimate-table-row-${e.id}`}>
                         <td className="p-2.5"><div className="flex items-center gap-2"><FileText className="w-4 h-4 text-muted-foreground" /><span>#{e.id} · {e.jobType}</span></div></td>
@@ -376,6 +383,7 @@ function RecordPage({ id, kind }: { id: number | null; kind: "opportunity" | "jo
                         <td className="p-2.5 text-right tnum">{money(cost)}</td>
                         <td className="p-2.5 text-right tnum">{money(em.margin)}</td>
                         <td className={cn("p-2.5 text-right tnum font-medium", em.gpm >= 35 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400")}>{pct(em.gpm, 1)}</td>
+                        <td className={cn("p-2.5 text-right tnum font-medium", meetsLabor ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400")} data-testid={`estimate-labor-pct-${e.id}`}>{pct(laborPct, 1)}</td>
                         <td className="p-2.5 text-right"><Badge variant="outline">{e.status}</Badge></td>
                       </tr>
                     );
