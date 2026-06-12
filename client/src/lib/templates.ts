@@ -595,9 +595,139 @@ const COMMERCIAL_SERVICE: QuickTemplate = {
   ],
 };
 
+/* ───────────────────────── 5. Siding (UPDATE_SPEC_9 §4) ─────────────────────────
+ * "Selector" lines in the spec (fastener spec, color, primed-vs-prefinished) have
+ * no unit of measure — modeled as EA roster lines so they appear in the template. */
+const SIDING: QuickTemplate = {
+  key: "siding", jobType: "Siding", name: "Siding",
+  sections: [
+    { title: "Siding Removal & Disposal", lines: [
+      L("Remove existing siding — vinyl", "SF"),
+      L("Remove existing siding — wood/lap", "SF"),
+      L("Remove existing siding — fiber cement", "SF"),
+      L("Remove existing siding — stucco/EIFS", "SF"),
+      L("Remove existing siding — aluminum/steel", "SF"),
+      L("Remove existing trim (corners, fascia, J-channel)", "LF"),
+      L("Remove existing house wrap / felt", "SF"),
+      L("Dumpster fee", "Flat"),
+      L("Haul-off / dump fee", "Flat"),
+    ]},
+    { title: "Substrate Repair & Prep", lines: [
+      L("OSB sheathing replacement", "SF or Sheet", OSB_SHEET),
+      L("Plywood sheathing replacement (1/2\")", "SF or Sheet"),
+      L("Partial sheathing repair / patch", "SF or EA"),
+      L("Sistering / reinforcing wall studs", "LF"),
+      L("Rotted framing repair", "LF or EA"),
+      L("Re-nail / fasten loose sheathing", "SF"),
+      L("Foam insulation board (rigid)", "SF"),
+      L("Insulation — batt (re-insulate open wall)", "SF"),
+      L("Window/door buck-out adjustment (for added thickness)", "EA"),
+    ]},
+    { title: "Weather Barrier / Moisture Management", lines: [
+      L("House wrap (standard)", "SF"),
+      L("House wrap (premium / drainable)", "SF"),
+      L("Building paper / felt (15 lb)", "SF"),
+      L("Rainscreen / drainage mat", "SF"),
+      L("Furring strips (rainscreen install)", "LF"),
+      L("Seam tape for house wrap", "LF"),
+      L("Window & door flashing tape", "LF"),
+      L("Sill pan flashing", "EA"),
+    ]},
+    { title: "Siding — Hardie Board (Fiber Cement)", lines: [
+      L("HardiePlank lap siding — 6.25\" exposure", "SF"),
+      L("HardiePlank lap siding — 7\" exposure", "SF"),
+      L("HardiePlank lap siding — 8.25\" exposure", "SF"),
+      L("HardiePlank lap siding — smooth finish", "SF"),
+      L("HardiePlank lap siding — cedar texture", "SF"),
+      L("HardiePanel vertical siding", "SF"),
+      L("HardieShingle siding (staggered/straight edge)", "SF"),
+      L("HardieTrim boards", "LF"),
+      L("HardieSoffit panels", "SF"),
+      L("Starter strip (Hardie)", "LF"),
+      L("Fastener spec — stainless / coil nails (selector)", "EA"),
+      L("Color: factory-primed vs. ColorPlus (selector)", "EA"),
+      L("Field paint after install (if primed only)", "SF"),
+    ]},
+    { title: "Siding — LP SmartSide (Engineered Wood)", lines: [
+      L("LP SmartSide lap siding — 6\" exposure", "SF"),
+      L("LP SmartSide lap siding — 7\" exposure", "SF"),
+      L("LP SmartSide lap siding — 8\" exposure", "SF"),
+      L("LP SmartSide lap siding — smooth finish", "SF"),
+      L("LP SmartSide lap siding — cedar texture", "SF"),
+      L("LP SmartSide panel siding (vertical)", "SF"),
+      L("LP SmartSide trim boards", "LF"),
+      L("LP SmartSide soffit panels", "SF"),
+      L("LP SmartSide shakes / shingle panels", "SF"),
+      L("Starter strip (LP)", "LF"),
+      L("Primed vs. prefinished (ExpertFinish) selector", "EA"),
+      L("Field paint after install (if primed only)", "SF"),
+    ]},
+    { title: "Siding — Vinyl", lines: [
+      L("Vinyl siding — standard (.040 gauge)", "SF"),
+      L("Vinyl siding — premium (.044–.046 gauge)", "SF"),
+      L("Vinyl siding — Dutch lap profile", "SF"),
+      L("Vinyl siding — double 4\" / double 5\" profile", "SF"),
+      L("Vinyl siding — board & batten", "SF"),
+      L("Vinyl shake / shingle panels", "SF"),
+      L("Vinyl soffit panels (vented/solid)", "SF"),
+      L("Insulated vinyl siding (foam-backed)", "SF"),
+      L("Starter strip (vinyl)", "LF"),
+      L("Utility / undersill trim", "LF"),
+      L("Color selector (dropdown)", "EA"),
+    ]},
+    { title: "Trim & Accessories", lines: [
+      L("Corner posts — outside (vinyl/composite/Hardie)", "LF"),
+      L("Corner posts — inside", "LF"),
+      L("J-channel", "LF"),
+      L("F-channel", "LF"),
+      L("Window/door trim (brick mold or J-channel wrap)", "LF or EA"),
+      L("Frieze board", "LF"),
+      L("Band board / belly band", "LF"),
+      L("Water table trim", "LF"),
+      L("Mounting blocks (light fixtures, hose bibs, etc.)", "EA"),
+      L("Shutters — remove & reset", "EA"),
+      L("Shutters — new install", "EA"),
+      L("House numbers / fixtures — remove & reset", "EA"),
+    ]},
+    { title: "Soffit & Fascia", lines: [
+      L("Fascia board replacement (matching siding line)", "LF"),
+      L("Fascia wrap (aluminum coil)", "LF"),
+      L("Soffit panel replacement — vented", "SF"),
+      L("Soffit panel replacement — solid", "SF"),
+      L("Soffit framing repair", "LF"),
+      L("Vented soffit upgrade (ventilation improvement)", "SF"),
+    ]},
+    { title: "Flashing & Sealing", lines: [
+      L("Drip cap / head flashing over windows & doors", "LF"),
+      L("Kick-out flashing", "EA"),
+      L("Z-flashing (horizontal siding transitions)", "LF"),
+      L("Step flashing at roofline", "LF"),
+      L("Caulk — siding seams / butt joints", "LF"),
+      L("Caulk — window & door perimeter", "EA or LF"),
+      L("Caulk — trim transitions", "LF"),
+      L("Caulk — penetrations (vents, pipes, fixtures)", "EA"),
+      L("Backer rod (wide gaps)", "LF"),
+      L("Sealant — Hardie-specific (manufacturer spec)", "LF"),
+    ]},
+    { title: "Miscellaneous / Additional Work", lines: [
+      L("Two-story surcharge", "SF or %"),
+      L("Three-story surcharge", "SF or %"),
+      L("Scaffold rental", "Day or Week"),
+      L("Difficult access / staging", "Flat or HR"),
+      L("Permit fee", "Flat", PERMIT_FLAT),
+      L("HOA documentation / color approval", "Flat"),
+      L("Re-inspection fee", "Flat"),
+      L("Touch-up paint kit (Hardie/LP ColorPlus/ExpertFinish)", "EA"),
+      L("Caulk maintenance kit (turnover to homeowner)", "EA"),
+      L("Additional labor", "HR"),
+      L("Material disposal / recycling fee", "Flat"),
+    ]},
+  ],
+};
+
 /* Registry: job type → roster-only Quick Template. */
 export const QUICK_TEMPLATES: QuickTemplate[] = [
-  RESIDENTIAL_SERVICE, GUTTERS, PAINTING, COMMERCIAL_SERVICE,
+  RESIDENTIAL_SERVICE, GUTTERS, PAINTING, COMMERCIAL_SERVICE, SIDING,
 ];
 
 export function templateForJobType(jobType: string | undefined): QuickTemplate | undefined {
@@ -608,7 +738,7 @@ export function templateForJobType(jobType: string | undefined): QuickTemplate |
 export const SHINGLE_REROOF_JOB_TYPES = ["Residential Re-Roof", "Residential Insurance Re-Roof"];
 
 /* Job types that have no Quick Template yet → fall back to Custom mode. */
-export const CUSTOM_ONLY_JOB_TYPES = ["Commercial", "Siding"];
+export const CUSTOM_ONLY_JOB_TYPES = ["Commercial"];
 
 /* UI hint describing which template a job type binds to. */
 export function templateHint(jobType: string): string {
