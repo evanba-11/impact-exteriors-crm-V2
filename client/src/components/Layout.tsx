@@ -4,7 +4,7 @@ import { useApp } from "@/lib/app-context";
 import {
   LayoutDashboard, KanbanSquare, Users, FileText, HardHat, DollarSign,
   Zap, CheckSquare, Calendar, Settings as SettingsIcon, Moon, Sun, Truck, Tag, Bell,
-  PackageOpen, AlertTriangle, Receipt,
+  PackageOpen, AlertTriangle, Receipt, MapPin,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -25,6 +25,7 @@ const NAV = [
   { href: "/estimates", label: "Estimates", icon: FileText },
   { href: "/price-list", label: "Price List", icon: Tag },
   { href: "/jobs", label: "Jobs", icon: HardHat },
+  { href: "/map", label: "Customer Map", icon: MapPin },
   { href: "/issues", label: "Issues", icon: AlertTriangle },
   { href: "/material-returns", label: "Material Returns", icon: PackageOpen },
   { href: "/financials", label: "Financials", icon: DollarSign },

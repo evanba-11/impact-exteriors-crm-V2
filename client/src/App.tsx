@@ -25,6 +25,7 @@ import Proposals from "@/pages/Proposals";
 import MaterialReturns from "@/pages/MaterialReturns";
 import ARaging from "@/pages/ARaging";
 import Issues from "@/pages/Issues";
+import CustomerMap from "@/pages/CustomerMap";
 
 function AppRouter() {
   return (
@@ -48,6 +49,7 @@ function AppRouter() {
       <Route path="/material-returns" component={MaterialReturns} />
       <Route path="/ar-aging" component={ARaging} />
       <Route path="/issues" component={Issues} />
+      <Route path="/map" component={CustomerMap} />
       <Route component={NotFound} />
     </Switch>
   );

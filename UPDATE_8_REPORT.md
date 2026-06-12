@@ -76,7 +76,17 @@ remaining gaps. Baseline `npm run build` passes before any changes.
 
 ## Build status
 - Baseline `npm run build`: PASS.
-- (updated below as work proceeds)
+- After all changes `npm run build`: PASS (vite client + esbuild server; only the standard >500kB chunk advisory).
+- `npm run dev`: boots clean on port 5000; `/api/jobs`, `/api/estimates`, `/api/wip` return 200; client HTML serves.
+- Note: `/api/wip` returns `billed`, `pctComplete`, `projMargin` (not `percentComplete`/`margin`). The Jobs/Opportunities financial cells now read those keys with fallbacks, which also corrects a latent display issue on the Jobs list.
+
+## Newly implemented (gaps found in audit)
+1. **LIST VIEWS → Tasks** — `client/src/pages/Tasks.tsx`: replaced Tabs with `ListToolbar` + `useListView("tasks")` (search, sort by due, Mine toggle, CSV export, persisted Open/Completed/All status filter).
+2. **LIST VIEWS → Estimates list** — `client/src/pages/Estimates.tsx`: new `EstimatesList` using `useListView("estimates")` with sortable Customer/Status/Contract/Cost/Margin columns, Mine, CSV export.
+3. **Financial columns** — `client/src/pages/Jobs.tsx`: added **Billings** column + CSV; `client/src/pages/Leads.tsx` (Opportunities): added **Cost** column + sort + CSV.
+4. **ESTIMATES completion cell** — `client/src/pages/RecordPage.tsx`: added **Labor %** cell (labor share of bid), green when ≤ 35% labor target (meets/beats), red when above (behind).
+5. **CUSTOMER MAP** — new `client/src/pages/CustomerMap.tsx` + `/map` route (`App.tsx`) + nav entry (`Layout.tsx`): rectangle drag-select over jobs plotted on a Northern-Colorado coordinate plane (no Google Maps key / no map lib present — addresses have no lat/lng, so points are deterministically derived from address). Selection lists properties/projects inside the box, links to the record, and exports CSV.
 
 ## Files changed
-- (updated below as work proceeds)
+- **New:** `client/src/pages/CustomerMap.tsx`.
+- **Edited:** `client/src/pages/Tasks.tsx`, `client/src/pages/Estimates.tsx`, `client/src/pages/Jobs.tsx`, `client/src/pages/Leads.tsx`, `client/src/pages/RecordPage.tsx`, `client/src/App.tsx`, `client/src/components/Layout.tsx`.
