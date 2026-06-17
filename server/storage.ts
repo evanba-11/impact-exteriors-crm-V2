@@ -4,16 +4,18 @@ import {
   invoices, changeOrders, vendors, tasks, settings, internalMessages, mentionReads,
   workOrders, materialReturns, materialReturnLines, issues,
   integrationAuditLog, validationCache,
+  integrationConnections, qboEntityMap, qboWebhookEvents, qboSyncQueue, crmPayments,
 } from "@shared/schema";
 import type {
   User, Job, Activity, PriceItem, PriceHistory, CostCode, Estimate, Template,
   Automation, AutomationRun, Outbox, Budget, Commitment, Cost, Invoice,
   ChangeOrder, Vendor, Task, Settings, InternalMessage, WorkOrder,
   MaterialReturn, MaterialReturnLine, Issue,
+  IntegrationConnection, QboEntityMap, QboSyncQueueRow, CrmPayment,
 } from "@shared/schema";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
-import { eq, desc, asc, and, inArray, gt } from "drizzle-orm";
+import { eq, desc, asc, and, inArray, gt, lte } from "drizzle-orm";
 
 const sqlite = new Database("data.db");
 sqlite.pragma("journal_mode = WAL");
@@ -47,6 +49,15 @@ CREATE TABLE IF NOT EXISTS material_return_lines (id INTEGER PRIMARY KEY AUTOINC
 CREATE TABLE IF NOT EXISTS issues (id INTEGER PRIMARY KEY AUTOINCREMENT, job_id INTEGER, title TEXT NOT NULL, description TEXT, status TEXT NOT NULL DEFAULT 'Open', priority TEXT NOT NULL DEFAULT 'Normal', assignee_id INTEGER, created_by TEXT, created_at INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS integration_audit_log (id INTEGER PRIMARY KEY AUTOINCREMENT, created_at INTEGER NOT NULL, actor_user_id INTEGER, integration TEXT NOT NULL, action TEXT NOT NULL, opportunity_id INTEGER, request TEXT, response TEXT, status TEXT NOT NULL, error TEXT);
 CREATE TABLE IF NOT EXISTS validation_cache (id INTEGER PRIMARY KEY AUTOINCREMENT, raw_input TEXT NOT NULL, response TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS integration_connections (id INTEGER PRIMARY KEY AUTOINCREMENT, provider TEXT NOT NULL, realm_id TEXT, access_token TEXT, refresh_token TEXT, token_expires_at INTEGER, connected_at INTEGER, connected_by_user_id INTEGER, last_refreshed_at INTEGER, status TEXT NOT NULL DEFAULT 'disconnected', last_error TEXT);
+CREATE TABLE IF NOT EXISTS qbo_entity_map (id INTEGER PRIMARY KEY AUTOINCREMENT, crm_entity_type TEXT NOT NULL, crm_entity_id TEXT NOT NULL, qbo_entity_type TEXT NOT NULL, qbo_entity_id TEXT NOT NULL, qbo_doc_number TEXT, qbo_sync_token TEXT, last_synced_at INTEGER, last_sync_direction TEXT, checksum TEXT);
+CREATE TABLE IF NOT EXISTS qbo_webhook_events (id INTEGER PRIMARY KEY AUTOINCREMENT, received_at INTEGER NOT NULL, event_id TEXT, realm_id TEXT, raw_payload TEXT NOT NULL, signature_verified INTEGER NOT NULL DEFAULT 0, processed_at INTEGER, processing_error TEXT);
+CREATE TABLE IF NOT EXISTS qbo_sync_queue (id INTEGER PRIMARY KEY AUTOINCREMENT, created_at INTEGER NOT NULL, entity_type TEXT NOT NULL, entity_id TEXT NOT NULL, direction TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, next_attempt_at INTEGER NOT NULL, last_error TEXT, status TEXT NOT NULL DEFAULT 'pending');
+CREATE TABLE IF NOT EXISTS crm_payments (id INTEGER PRIMARY KEY AUTOINCREMENT, job_id INTEGER NOT NULL, qbo_payment_id TEXT NOT NULL, qbo_invoice_id TEXT, amount REAL NOT NULL DEFAULT 0, payment_date TEXT, method TEXT, reference TEXT, created_at INTEGER NOT NULL);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_qbo_entity_map_crm ON qbo_entity_map(crm_entity_type, crm_entity_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_qbo_entity_map_qbo ON qbo_entity_map(qbo_entity_type, qbo_entity_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_crm_payments_qbo ON crm_payments(qbo_payment_id);
+CREATE INDEX IF NOT EXISTS idx_qbo_sync_queue_next ON qbo_sync_queue(status, next_attempt_at);
 `);
 
 /* Update 6: add new job columns to existing DBs (idempotent). */
@@ -84,6 +95,16 @@ for (const col of [
 }
 try { sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_jobs_place_id ON jobs(place_id);`); } catch { /* ignore */ }
 try { sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_validation_cache_raw ON validation_cache(raw_input);`); } catch { /* ignore */ }
+
+/* Phase 2: QuickBooks Online — add accounting columns to existing DBs (idempotent). */
+for (const col of [
+  "qbo_customer_id TEXT", "qbo_estimate_id TEXT", "qbo_estimate_doc_number TEXT",
+  "qbo_invoice_id TEXT", "qbo_invoice_doc_number TEXT", "qbo_invoice_balance REAL",
+  "qbo_invoice_total REAL", "qbo_invoice_status TEXT", "qbo_invoice_url TEXT",
+  "qbo_last_synced_at INTEGER",
+]) {
+  try { sqlite.exec(`ALTER TABLE jobs ADD COLUMN ${col};`); } catch { /* already exists */ }
+}
 
 export const now = () => Date.now();
 
@@ -270,6 +291,110 @@ class Storage {
     return db.insert(validationCache).values({
       rawInput, response: JSON.stringify(response), createdAt: t, expiresAt: t + ttlMs,
     }).returning().get();
+  }
+
+  /* ───────────────── QuickBooks Online (Phase 2) ───────────────── */
+
+  // singleton connection per provider
+  getConnection(provider = "qbo"): IntegrationConnection | undefined {
+    return db.select().from(integrationConnections).where(eq(integrationConnections.provider, provider)).get();
+  }
+  upsertConnection(provider: string, p: Partial<IntegrationConnection>): IntegrationConnection {
+    const existing = this.getConnection(provider);
+    if (existing) {
+      return db.update(integrationConnections).set(p).where(eq(integrationConnections.id, existing.id)).returning().get();
+    }
+    return db.insert(integrationConnections).values({ provider, status: "disconnected", ...p }).returning().get();
+  }
+
+  // entity map
+  getMapByCrm(crmEntityType: string, crmEntityId: string | number): QboEntityMap | undefined {
+    return db.select().from(qboEntityMap)
+      .where(and(eq(qboEntityMap.crmEntityType, crmEntityType), eq(qboEntityMap.crmEntityId, String(crmEntityId)))).get();
+  }
+  getMapByQbo(qboEntityType: string, qboEntityId: string): QboEntityMap | undefined {
+    return db.select().from(qboEntityMap)
+      .where(and(eq(qboEntityMap.qboEntityType, qboEntityType), eq(qboEntityMap.qboEntityId, qboEntityId))).get();
+  }
+  upsertMap(p: {
+    crmEntityType: string; crmEntityId: string | number; qboEntityType: string; qboEntityId: string;
+    qboDocNumber?: string | null; qboSyncToken?: string | null; lastSyncDirection?: string | null; checksum?: string | null;
+  }): QboEntityMap {
+    const existing = this.getMapByCrm(p.crmEntityType, p.crmEntityId);
+    const values = {
+      crmEntityType: p.crmEntityType,
+      crmEntityId: String(p.crmEntityId),
+      qboEntityType: p.qboEntityType,
+      qboEntityId: p.qboEntityId,
+      qboDocNumber: p.qboDocNumber ?? existing?.qboDocNumber ?? null,
+      qboSyncToken: p.qboSyncToken ?? existing?.qboSyncToken ?? null,
+      lastSyncedAt: now(),
+      lastSyncDirection: p.lastSyncDirection ?? existing?.lastSyncDirection ?? null,
+      checksum: p.checksum ?? existing?.checksum ?? null,
+    };
+    if (existing) {
+      return db.update(qboEntityMap).set(values).where(eq(qboEntityMap.id, existing.id)).returning().get();
+    }
+    return db.insert(qboEntityMap).values(values).returning().get();
+  }
+
+  // webhook events
+  addWebhookEvent(p: { eventId?: string | null; realmId?: string | null; rawPayload: string; signatureVerified: boolean }) {
+    return db.insert(qboWebhookEvents).values({
+      receivedAt: now(), eventId: p.eventId ?? null, realmId: p.realmId ?? null,
+      rawPayload: p.rawPayload, signatureVerified: p.signatureVerified,
+    }).returning().get();
+  }
+  markWebhookProcessed(id: number, error?: string | null) {
+    return db.update(qboWebhookEvents)
+      .set({ processedAt: now(), processingError: error ?? null })
+      .where(eq(qboWebhookEvents.id, id)).returning().get();
+  }
+  getWebhookEvents(limit = 100) {
+    return db.select().from(qboWebhookEvents).orderBy(desc(qboWebhookEvents.id)).limit(limit).all();
+  }
+
+  // sync queue
+  enqueueSync(p: { entityType: string; entityId: string | number; direction: string }) {
+    return db.insert(qboSyncQueue).values({
+      createdAt: now(), entityType: p.entityType, entityId: String(p.entityId),
+      direction: p.direction, attempts: 0, nextAttemptAt: now(), status: "pending",
+    }).returning().get();
+  }
+  dueSyncQueue(limit = 25): QboSyncQueueRow[] {
+    return db.select().from(qboSyncQueue)
+      .where(and(eq(qboSyncQueue.status, "pending"), lte(qboSyncQueue.nextAttemptAt, now())))
+      .orderBy(asc(qboSyncQueue.nextAttemptAt)).limit(limit).all();
+  }
+  updateSyncQueue(id: number, p: Partial<QboSyncQueueRow>) {
+    return db.update(qboSyncQueue).set(p).where(eq(qboSyncQueue.id, id)).returning().get();
+  }
+  failedSyncQueue(limit = 100): QboSyncQueueRow[] {
+    return db.select().from(qboSyncQueue).where(eq(qboSyncQueue.status, "failed"))
+      .orderBy(desc(qboSyncQueue.id)).limit(limit).all();
+  }
+
+  // crm payments (QBO mirror)
+  getJobPayments(jobId: number): CrmPayment[] {
+    return db.select().from(crmPayments).where(eq(crmPayments.jobId, jobId)).orderBy(desc(crmPayments.id)).all();
+  }
+  getPaymentByQboId(qboPaymentId: string): CrmPayment | undefined {
+    return db.select().from(crmPayments).where(eq(crmPayments.qboPaymentId, qboPaymentId)).get();
+  }
+  upsertPayment(p: {
+    jobId: number; qboPaymentId: string; qboInvoiceId?: string | null; amount: number;
+    paymentDate?: string | null; method?: string | null; reference?: string | null;
+  }): CrmPayment {
+    const existing = this.getPaymentByQboId(p.qboPaymentId);
+    const values = {
+      jobId: p.jobId, qboPaymentId: p.qboPaymentId, qboInvoiceId: p.qboInvoiceId ?? null,
+      amount: p.amount, paymentDate: p.paymentDate ?? null, method: p.method ?? null,
+      reference: p.reference ?? null, createdAt: existing?.createdAt ?? now(),
+    };
+    if (existing) {
+      return db.update(crmPayments).set(values).where(eq(crmPayments.id, existing.id)).returning().get();
+    }
+    return db.insert(crmPayments).values(values).returning().get();
   }
 
   // settings

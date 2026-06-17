@@ -22,6 +22,13 @@ export const SECRET_NAMES = {
   impersonationEmail: "google_workspace_impersonation_email",
   driveRootFolderId: "google_drive_root_folder_id",
   mapsApiKey: "google_maps_api_key",
+  // ── Phase 2: QuickBooks Online ──
+  qboClientId: "qbo_client_id",
+  qboClientSecret: "qbo_client_secret",
+  qboEnvironment: "qbo_environment",                 // sandbox | production
+  qboRedirectUri: "qbo_redirect_uri",
+  qboWebhookVerifierToken: "qbo_webhook_verifier_token",
+  qboTokenEncryptionKey: "qbo_token_encryption_key", // 32-byte key for AES-256-GCM token encryption at rest
 } as const;
 
 // Env-var fallbacks (used when Supabase Vault is not configured). These mirror the
@@ -31,6 +38,12 @@ const ENV_FALLBACK: Record<string, string> = {
   [SECRET_NAMES.impersonationEmail]: "GOOGLE_WORKSPACE_IMPERSONATION_EMAIL",
   [SECRET_NAMES.driveRootFolderId]: "GOOGLE_DRIVE_ROOT_FOLDER_ID",
   [SECRET_NAMES.mapsApiKey]: "GOOGLE_MAPS_API_KEY",
+  [SECRET_NAMES.qboClientId]: "QBO_CLIENT_ID",
+  [SECRET_NAMES.qboClientSecret]: "QBO_CLIENT_SECRET",
+  [SECRET_NAMES.qboEnvironment]: "QBO_ENVIRONMENT",
+  [SECRET_NAMES.qboRedirectUri]: "QBO_REDIRECT_URI",
+  [SECRET_NAMES.qboWebhookVerifierToken]: "QBO_WEBHOOK_VERIFIER_TOKEN",
+  [SECRET_NAMES.qboTokenEncryptionKey]: "QBO_TOKEN_ENCRYPTION_KEY",
 };
 
 let cache: Record<string, string | undefined> = {};

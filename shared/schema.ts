@@ -76,6 +76,17 @@ export const jobs = sqliteTable("jobs", {
   driveFolderId: text("drive_folder_id"),
   driveFolderUrl: text("drive_folder_url"),
   driveFolderCreatedAt: integer("drive_folder_created_at"),
+  // ── Phase 2: QuickBooks Online (accounting) ──
+  qboCustomerId: text("qbo_customer_id"),
+  qboEstimateId: text("qbo_estimate_id"),
+  qboEstimateDocNumber: text("qbo_estimate_doc_number"),
+  qboInvoiceId: text("qbo_invoice_id"),
+  qboInvoiceDocNumber: text("qbo_invoice_doc_number"),
+  qboInvoiceBalance: real("qbo_invoice_balance"),
+  qboInvoiceTotal: real("qbo_invoice_total"),
+  qboInvoiceStatus: text("qbo_invoice_status"),    // Unpaid | PartiallyPaid | Paid
+  qboInvoiceUrl: text("qbo_invoice_url"),
+  qboLastSyncedAt: integer("qbo_last_synced_at"),
 });
 
 /* ───────────────────────── Work Orders (Update 6) ───────────────────────── */
@@ -399,6 +410,81 @@ export const validationCache = sqliteTable("validation_cache", {
   expiresAt: integer("expires_at").notNull(),
 });
 
+/* ───────────────────────── QuickBooks Online — Phase 2 ─────────────────────────
+   Singleton OAuth connection (one company), external-ID mapping, webhook event
+   log, and a retry queue. Tokens are stored encrypted at rest (AES-256-GCM via
+   server/lib/qbo/crypto.ts); the *_token columns hold ciphertext, not plaintext. */
+
+/* Singleton connection per provider (provider='qbo'). One row only. */
+export const integrationConnections = sqliteTable("integration_connections", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  provider: text("provider").notNull(),               // 'qbo'
+  realmId: text("realm_id"),                           // QBO company (realm) id
+  accessToken: text("access_token"),                   // encrypted (short-lived)
+  refreshToken: text("refresh_token"),                 // encrypted (rotates on refresh)
+  tokenExpiresAt: integer("token_expires_at"),         // epoch ms — when access token expires
+  connectedAt: integer("connected_at"),
+  connectedByUserId: integer("connected_by_user_id"),
+  lastRefreshedAt: integer("last_refreshed_at"),
+  status: text("status").notNull().default("disconnected"), // active | disconnected | error
+  lastError: text("last_error"),
+});
+
+/* Maps CRM entity ids to QBO entity ids; carries the Intuit SyncToken. */
+export const qboEntityMap = sqliteTable("qbo_entity_map", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  crmEntityType: text("crm_entity_type").notNull(),    // customer | estimate | invoice | payment
+  crmEntityId: text("crm_entity_id").notNull(),        // stringified CRM id (job id, estimate id, …)
+  qboEntityType: text("qbo_entity_type").notNull(),    // Customer | Estimate | Invoice | Payment
+  qboEntityId: text("qbo_entity_id").notNull(),
+  qboDocNumber: text("qbo_doc_number"),
+  qboSyncToken: text("qbo_sync_token"),                // Intuit optimistic-concurrency token
+  lastSyncedAt: integer("last_synced_at"),
+  lastSyncDirection: text("last_sync_direction"),      // push | pull
+  checksum: text("checksum"),                           // hash of last pushed payload
+});
+
+/* Raw webhook events — stored only after signature verification. */
+export const qboWebhookEvents = sqliteTable("qbo_webhook_events", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  receivedAt: integer("received_at").notNull(),
+  eventId: text("event_id"),
+  realmId: text("realm_id"),
+  rawPayload: text("raw_payload").notNull(),           // JSON
+  signatureVerified: integer("signature_verified", { mode: "boolean" }).notNull().default(false),
+  processedAt: integer("processed_at"),
+  processingError: text("processing_error"),
+});
+
+/* Retry queue with exponential backoff. */
+export const qboSyncQueue = sqliteTable("qbo_sync_queue", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  createdAt: integer("created_at").notNull(),
+  entityType: text("entity_type").notNull(),           // customer | estimate | invoice | payment | opportunity
+  entityId: text("entity_id").notNull(),
+  direction: text("direction").notNull(),              // push | pull
+  attempts: integer("attempts").notNull().default(0),
+  nextAttemptAt: integer("next_attempt_at").notNull(),
+  lastError: text("last_error"),
+  status: text("status").notNull().default("pending"), // pending | in_progress | success | failed
+});
+
+/* Thin shadow of QBO payments (no payments table existed pre-Phase 2). */
+export const crmPayments = sqliteTable("crm_payments", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  jobId: integer("job_id").notNull(),
+  qboPaymentId: text("qbo_payment_id").notNull(),
+  qboInvoiceId: text("qbo_invoice_id"),
+  amount: real("amount").notNull().default(0),
+  paymentDate: text("payment_date"),                   // QBO TxnDate (yyyy-mm-dd)
+  method: text("method"),
+  reference: text("reference"),
+  createdAt: integer("created_at").notNull(),
+});
+
+export const QBO_INVOICE_STATUSES = ["Unpaid", "PartiallyPaid", "Paid"] as const;
+export const QBO_CONNECTION_STATUSES = ["active", "disconnected", "error"] as const;
+
 /* ───────────────────────── Insert schemas & types ───────────────────────── */
 const ins = <T extends Parameters<typeof createInsertSchema>[0]>(t: T) =>
   createInsertSchema(t);
@@ -452,6 +538,11 @@ export type MaterialReturnLine = typeof materialReturnLines.$inferSelect;
 export type Issue = typeof issues.$inferSelect;
 export type IntegrationAuditLog = typeof integrationAuditLog.$inferSelect;
 export type ValidationCache = typeof validationCache.$inferSelect;
+export type IntegrationConnection = typeof integrationConnections.$inferSelect;
+export type QboEntityMap = typeof qboEntityMap.$inferSelect;
+export type QboWebhookEvent = typeof qboWebhookEvents.$inferSelect;
+export type QboSyncQueueRow = typeof qboSyncQueue.$inferSelect;
+export type CrmPayment = typeof crmPayments.$inferSelect;
 
 export type InsertJob = z.infer<typeof insertJobSchema>;
 export type InsertWorkOrder = z.infer<typeof insertWorkOrderSchema>;

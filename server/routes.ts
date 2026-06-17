@@ -17,6 +17,9 @@ import { scoreLead, recomputeAllScores, jobFinancials, allWIP, controllerFlags, 
 import { startScheduler, evaluateAutomations } from "./automation";
 import { budgetByCostCode, defaultExtras, type JobInput, type ProposalExtras } from "@shared/pricing";
 import { registerGoogleRoutes, ensureOpportunityFolder } from "./integrations/google";
+import { registerQboRoutes } from "./integrations/qbo";
+import { upsertCustomerForOpportunity } from "./lib/qbo/customers";
+import { startQboWorker } from "./lib/qbo/queue";
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
   seedIfEmpty();
@@ -28,6 +31,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   /* ───── Google Workspace integration (Phase 1) ───── */
   registerGoogleRoutes(app);
+
+  /* ───── QuickBooks Online integration (Phase 2) ───── */
+  registerQboRoutes(app);
+  startQboWorker();
 
   /* ───── Users ───── */
   app.get("/api/users", (_r, res) => ok(res, storage.getUsers()));
@@ -60,6 +67,13 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     ensureOpportunityFolder(job.id, actorUserId).catch((e) => {
       console.warn(`[google] auto folder provision failed for job ${job.id}:`, e?.message || e);
     });
+    // Phase 2: auto-sync the customer to QBO when connected. Fire-and-forget;
+    // failures land in integration_audit_log and the Accounting section offers a resync.
+    if (storage.getConnection("qbo")?.status === "active") {
+      upsertCustomerForOpportunity(job.id, actorUserId).catch((e) => {
+        console.warn(`[qbo] auto customer sync failed for job ${job.id}:`, e?.message || e);
+      });
+    }
     ok(res, job);
   });
   app.patch("/api/jobs/:id", (req, res) => {

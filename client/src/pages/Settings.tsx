@@ -14,14 +14,14 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { pct } from "@/lib/format";
 import { STAGES, DEFAULT_SLAS } from "@shared/schema";
-import { SiTwilio, SiStripe, SiGoogle, SiQuickbooks } from "react-icons/si";
+import { SiTwilio, SiStripe, SiGoogle } from "react-icons/si";
 import { PlugZap, Save } from "lucide-react";
+import QuickBooksPanel from "@/components/QuickBooksPanel";
 import type { Settings as SettingsType, User, CostCode } from "@shared/schema";
 
 const INTEGRATIONS = [
   { name: "Twilio", desc: "SMS sending for follow-ups", Icon: SiTwilio, color: "#F22F46" },
   { name: "SendGrid", desc: "Transactional email delivery", Icon: PlugZap, color: "#1A82E2" },
-  { name: "QuickBooks", desc: "Sync invoices & costs to GL", Icon: SiQuickbooks, color: "#2CA01C" },
   { name: "Stripe", desc: "Deposit & invoice payments", Icon: SiStripe, color: "#635BFF" },
   { name: "EagleView", desc: "Aerial roof measurements", Icon: PlugZap, color: "#0B6E4F" },
   { name: "Google Calendar", desc: "Two-way appointment sync", Icon: SiGoogle, color: "#4285F4" },
@@ -37,6 +37,17 @@ export default function Settings() {
   const [accent, setAccent] = useState("#D97B29");
   const [floor, setFloor] = useState("35");
   const [slas, setSlas] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    // OAuth callback redirects to /#/settings?qbo=connected — surface a toast then clean the hash.
+    const hash = window.location.hash;
+    if (hash.includes("qbo=connected")) {
+      toast({ title: "QuickBooks connected" });
+      queryClient.invalidateQueries({ queryKey: ["qbo-status"] });
+      const clean = hash.replace(/[?&]qbo=connected/, "");
+      window.history.replaceState(null, "", window.location.pathname + clean);
+    }
+  }, [toast]);
 
   useEffect(() => {
     if (settings) {
@@ -183,7 +194,8 @@ export default function Settings() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="integrations" className="mt-4">
+        <TabsContent value="integrations" className="mt-4 space-y-5">
+          <QuickBooksPanel />
           <div className="grid sm:grid-cols-2 gap-4">
             {INTEGRATIONS.map((i) => (
               <Card key={i.name} data-testid={`card-integration-${i.name.toLowerCase().replace(/\s/g, "-")}`}>
