@@ -28,6 +28,7 @@ import { TeamFeed } from "@/components/JobDrawer";
 import { SegmentationBlock, type SegValues } from "@/components/Segmentation";
 import { WorkOrdersTab } from "@/components/WorkOrder";
 import DriveFilesPanel from "@/components/DriveFilesPanel";
+import AccountingPanel from "@/components/AccountingPanel";
 import { metricsFor } from "@/lib/record-derive";
 import { STAGES, STAKEHOLDER_ROLES } from "@shared/schema";
 import { JobTypeBadge } from "@/pages/Estimates";
@@ -162,6 +163,7 @@ function RecordPage({ id, kind }: { id: number | null; kind: "opportunity" | "jo
             <TabsTrigger value="estimates" data-testid="tab-record-estimates">Estimates</TabsTrigger>
             <TabsTrigger value="workorders" data-testid="tab-record-workorders">Work Orders</TabsTrigger>
             <TabsTrigger value="files" data-testid="tab-record-files">Files</TabsTrigger>
+            <TabsTrigger value="accounting" data-testid="tab-record-accounting">Accounting</TabsTrigger>
             <TabsTrigger value="photos">Photos</TabsTrigger>
           </TabsList>
           {kind === "opportunity" && (
@@ -407,6 +409,11 @@ function RecordPage({ id, kind }: { id: number | null; kind: "opportunity" | "jo
         <TabsContent value="files" className="mt-4">
           <div className="rounded-xl border border-border bg-card p-4">
             <DriveFilesPanel opportunityId={job.id} driveFolderUrl={job.driveFolderUrl} />
+          </div>
+        </TabsContent>
+        <TabsContent value="accounting" className="mt-4">
+          <div className="rounded-xl border border-border bg-card p-4">
+            <AccountingPanel opportunityId={job.id} />
           </div>
         </TabsContent>
         <TabsContent value="photos" className="mt-4">
