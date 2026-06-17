@@ -3,6 +3,7 @@ import {
   templates, automations, automationRuns, outbox, budgets, commitments, costs,
   invoices, changeOrders, vendors, tasks, settings, internalMessages, mentionReads,
   workOrders, materialReturns, materialReturnLines, issues,
+  integrationAuditLog, validationCache,
 } from "@shared/schema";
 import type {
   User, Job, Activity, PriceItem, PriceHistory, CostCode, Estimate, Template,
@@ -12,7 +13,7 @@ import type {
 } from "@shared/schema";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
-import { eq, desc, asc, and, inArray } from "drizzle-orm";
+import { eq, desc, asc, and, inArray, gt } from "drizzle-orm";
 
 const sqlite = new Database("data.db");
 sqlite.pragma("journal_mode = WAL");
@@ -44,6 +45,8 @@ CREATE TABLE IF NOT EXISTS work_orders (id INTEGER PRIMARY KEY AUTOINCREMENT, jo
 CREATE TABLE IF NOT EXISTS material_returns (id INTEGER PRIMARY KEY AUTOINCREMENT, job_id INTEGER, status TEXT NOT NULL DEFAULT 'Pending', submitted_by TEXT, submitted_at INTEGER, approved_by TEXT, approved_at INTEGER, vendor_id INTEGER, total_return_value REAL NOT NULL DEFAULT 0, photos_json TEXT NOT NULL DEFAULT '[]', notes TEXT, created_at INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS material_return_lines (id INTEGER PRIMARY KEY AUTOINCREMENT, return_id INTEGER NOT NULL, item_id INTEGER, item_name TEXT NOT NULL, vendor_id INTEGER, qty REAL NOT NULL DEFAULT 0, unit TEXT NOT NULL DEFAULT 'EA', unit_rate REAL NOT NULL DEFAULT 0, line_value REAL NOT NULL DEFAULT 0, category TEXT);
 CREATE TABLE IF NOT EXISTS issues (id INTEGER PRIMARY KEY AUTOINCREMENT, job_id INTEGER, title TEXT NOT NULL, description TEXT, status TEXT NOT NULL DEFAULT 'Open', priority TEXT NOT NULL DEFAULT 'Normal', assignee_id INTEGER, created_by TEXT, created_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS integration_audit_log (id INTEGER PRIMARY KEY AUTOINCREMENT, created_at INTEGER NOT NULL, actor_user_id INTEGER, integration TEXT NOT NULL, action TEXT NOT NULL, opportunity_id INTEGER, request TEXT, response TEXT, status TEXT NOT NULL, error TEXT);
+CREATE TABLE IF NOT EXISTS validation_cache (id INTEGER PRIMARY KEY AUTOINCREMENT, raw_input TEXT NOT NULL, response TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL);
 `);
 
 /* Update 6: add new job columns to existing DBs (idempotent). */
@@ -68,6 +71,19 @@ for (const col of [
 ]) {
   try { sqlite.exec(`ALTER TABLE work_orders ADD COLUMN ${col};`); } catch { /* already exists */ }
 }
+
+/* Phase 1: Google Workspace — add address + Drive columns to existing DBs (idempotent). */
+for (const col of [
+  "address_line1 TEXT", "address_line2 TEXT", "city TEXT", "state TEXT",
+  "postal_code TEXT", "country TEXT", "formatted_address TEXT", "place_id TEXT",
+  "latitude REAL", "longitude REAL", "google_maps_url TEXT",
+  "address_verified INTEGER DEFAULT 0", "address_validation_response TEXT",
+  "drive_folder_id TEXT", "drive_folder_url TEXT", "drive_folder_created_at INTEGER",
+]) {
+  try { sqlite.exec(`ALTER TABLE jobs ADD COLUMN ${col};`); } catch { /* already exists */ }
+}
+try { sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_jobs_place_id ON jobs(place_id);`); } catch { /* ignore */ }
+try { sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_validation_cache_raw ON validation_cache(raw_input);`); } catch { /* ignore */ }
 
 export const now = () => Date.now();
 
@@ -222,6 +238,39 @@ class Storage {
   createIssue(d: any) { return db.insert(issues).values({ createdAt: now(), ...d }).returning().get(); }
   updateIssue(id: number, p: Partial<Issue>) { return db.update(issues).set(p).where(eq(issues.id, id)).returning().get(); }
   deleteIssue(id: number) { return db.delete(issues).where(eq(issues.id, id)).run(); }
+
+  // integration audit log (Phase 1)
+  addAuditLog(d: {
+    actorUserId?: number | null; integration: string; action: string;
+    opportunityId?: number | null; request?: unknown; response?: unknown;
+    status: string; error?: string | null;
+  }) {
+    return db.insert(integrationAuditLog).values({
+      createdAt: now(),
+      actorUserId: d.actorUserId ?? null,
+      integration: d.integration,
+      action: d.action,
+      opportunityId: d.opportunityId ?? null,
+      request: d.request != null ? JSON.stringify(d.request) : null,
+      response: d.response != null ? JSON.stringify(d.response) : null,
+      status: d.status,
+      error: d.error ?? null,
+    }).returning().get();
+  }
+  getAuditLog(limit = 200) { return db.select().from(integrationAuditLog).orderBy(desc(integrationAuditLog.id)).limit(limit).all(); }
+
+  // address validation cache (Phase 1)
+  getCachedValidation(rawInput: string) {
+    return db.select().from(validationCache)
+      .where(and(eq(validationCache.rawInput, rawInput), gt(validationCache.expiresAt, now())))
+      .orderBy(desc(validationCache.id)).get();
+  }
+  putCachedValidation(rawInput: string, response: unknown, ttlMs: number) {
+    const t = now();
+    return db.insert(validationCache).values({
+      rawInput, response: JSON.stringify(response), createdAt: t, expiresAt: t + ttlMs,
+    }).returning().get();
+  }
 
   // settings
   getSettings() { return db.select().from(settings).where(eq(settings.id, 1)).get(); }

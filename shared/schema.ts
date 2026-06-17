@@ -59,6 +59,23 @@ export const jobs = sqliteTable("jobs", {
   companyCamProjectId: text("companycam_project_id"),        // placeholder integration id
   companyCamCreatedAt: integer("companycam_created_at"),     // when CompanyCam project was created
   preProductionChecklistJson: text("pre_production_checklist_json").notNull().default("{}"), // {colorsFinal,estimateCorrect,contactCorrect,depositReceived,supplementsAck}
+  // ── Phase 1: Google Workspace integration (address validation + Drive) ──
+  addressLine1: text("address_line1"),
+  addressLine2: text("address_line2"),
+  city: text("city"),
+  state: text("state"),
+  postalCode: text("postal_code"),
+  country: text("country"),
+  formattedAddress: text("formatted_address"),       // Google canonical address
+  placeId: text("place_id"),                         // Google place_id (indexed)
+  latitude: real("latitude"),
+  longitude: real("longitude"),
+  googleMapsUrl: text("google_maps_url"),
+  addressVerified: integer("address_verified", { mode: "boolean" }).default(false),
+  addressValidationResponse: text("address_validation_response"), // raw API JSON (audit)
+  driveFolderId: text("drive_folder_id"),
+  driveFolderUrl: text("drive_folder_url"),
+  driveFolderCreatedAt: integer("drive_folder_created_at"),
 });
 
 /* ───────────────────────── Work Orders (Update 6) ───────────────────────── */
@@ -357,6 +374,31 @@ export const issues = sqliteTable("issues", {
 export const ISSUE_STATUSES = ["Open", "In Progress", "Resolved"] as const;
 export const MATERIAL_RETURN_STATUSES = ["Pending", "Approved", "Rejected"] as const;
 
+/* ───────────────────────── Integration audit log (Phase 1) ─────────────────────────
+   One row per external API call (Google Maps / Drive, future QBO). */
+export const integrationAuditLog = sqliteTable("integration_audit_log", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  createdAt: integer("created_at").notNull(),
+  actorUserId: integer("actor_user_id"),       // null => system / fire-and-forget
+  integration: text("integration").notNull(),  // google_maps | google_drive | qbo
+  action: text("action").notNull(),            // validate_address | ensure_folder | list_files | upload_file | delete_file
+  opportunityId: integer("opportunity_id"),     // jobs.id (opportunities live in the jobs table)
+  request: text("request"),                     // JSON (sanitized — never raw secrets)
+  response: text("response"),                   // JSON
+  status: text("status").notNull(),            // ok | error
+  error: text("error"),
+});
+
+/* ───────────────────────── Address validation cache (Phase 1) ─────────────────────────
+   Caches Google Address Validation responses keyed by raw input for 24h. */
+export const validationCache = sqliteTable("validation_cache", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  rawInput: text("raw_input").notNull(),        // exact raw address string queried
+  response: text("response").notNull(),         // JSON canonical result
+  createdAt: integer("created_at").notNull(),
+  expiresAt: integer("expires_at").notNull(),
+});
+
 /* ───────────────────────── Insert schemas & types ───────────────────────── */
 const ins = <T extends Parameters<typeof createInsertSchema>[0]>(t: T) =>
   createInsertSchema(t);
@@ -408,6 +450,8 @@ export type WorkOrder = typeof workOrders.$inferSelect;
 export type MaterialReturn = typeof materialReturns.$inferSelect;
 export type MaterialReturnLine = typeof materialReturnLines.$inferSelect;
 export type Issue = typeof issues.$inferSelect;
+export type IntegrationAuditLog = typeof integrationAuditLog.$inferSelect;
+export type ValidationCache = typeof validationCache.$inferSelect;
 
 export type InsertJob = z.infer<typeof insertJobSchema>;
 export type InsertWorkOrder = z.infer<typeof insertWorkOrderSchema>;

@@ -16,6 +16,7 @@ function migrateJobTypes() {
 import { scoreLead, recomputeAllScores, jobFinancials, allWIP, controllerFlags, commissionReport } from "./engine";
 import { startScheduler, evaluateAutomations } from "./automation";
 import { budgetByCostCode, defaultExtras, type JobInput, type ProposalExtras } from "@shared/pricing";
+import { registerGoogleRoutes, ensureOpportunityFolder } from "./integrations/google";
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
   seedIfEmpty();
@@ -24,6 +25,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   startScheduler();
 
   const ok = (res: any, data: any) => res.json(data);
+
+  /* ───── Google Workspace integration (Phase 1) ───── */
+  registerGoogleRoutes(app);
 
   /* ───── Users ───── */
   app.get("/api/users", (_r, res) => ok(res, storage.getUsers()));
@@ -49,6 +53,13 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     storage.addActivity({ jobId: job.id, type: "system", actor: "system", flow: job.flow, message: `Lead created: ${job.customer}` });
     storage.updateJob(job.id, { leadScore: scoreLead(job).total });
     evaluateAutomations();
+    // Phase 1: auto-provision a Drive folder. Fire-and-forget — never block the
+    // create response; failures are logged to integration_audit_log and the UI
+    // surfaces a "Create Drive folder" retry button.
+    const actorUserId = req.body?.repId ? Number(req.body.repId) : null;
+    ensureOpportunityFolder(job.id, actorUserId).catch((e) => {
+      console.warn(`[google] auto folder provision failed for job ${job.id}:`, e?.message || e);
+    });
     ok(res, job);
   });
   app.patch("/api/jobs/:id", (req, res) => {
