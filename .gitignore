@@ -1,4 +1,11 @@
 node_modules/
 dist/
+
+# SQLite database + WAL/SHM sidecar files (never commit)
 *.db
+*.db-shm
+*.db-wal
+*.db-journal
+data.db*
+
 .env
