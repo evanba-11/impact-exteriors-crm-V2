@@ -14,10 +14,11 @@ import { useLocation } from "wouter";
 import { useState, useRef, useEffect } from "react";
 import {
   MapPin, Phone, Mail, MessageSquare, FileText as FileIcon, PauseCircle, PlayCircle,
-  CornerDownLeft, FileBox, Send, Users as UsersIcon,
+  CornerDownLeft, Send, Users as UsersIcon,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { JobTypeBadge } from "@/pages/Estimates";
+import DriveFilesPanel from "@/components/DriveFilesPanel";
 
 export default function JobDrawer({ jobId, onClose }: { jobId: number | null; onClose: () => void }) {
   const open = jobId != null;
@@ -65,7 +66,17 @@ export default function JobDrawer({ jobId, onClose }: { jobId: number | null; on
                     {job.score && <ScoreBadge score={job.score} />}
                   </div>
                   <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                    <MapPin className="w-3.5 h-3.5" /> {job.address}
+                    <MapPin className="w-3.5 h-3.5" />
+                    {(job.googleMapsUrl || job.address) ? (
+                      <a
+                        href={job.googleMapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.address || "")}`}
+                        target="_blank" rel="noreferrer"
+                        className="hover:text-primary hover:underline"
+                        data-testid="link-job-maps"
+                      >
+                        {job.address || "Open in Google Maps"}
+                      </a>
+                    ) : <span>{job.address}</span>}
                   </div>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1.5">
                     <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{job.phone}</span>
@@ -202,14 +213,7 @@ export default function JobDrawer({ jobId, onClose }: { jobId: number | null; on
               </TabsContent>
 
               <TabsContent value="documents" className="mt-4">
-                <div className="space-y-2 text-sm">
-                  {["Signed contract.pdf", "EagleView report.pdf", "Insurance scope.pdf", "Job photos (14)"].map((d) => (
-                    <div key={d} className="flex items-center gap-2 p-2 rounded border border-card-border text-muted-foreground">
-                      <FileBox className="w-4 h-4" /> {d}
-                    </div>
-                  ))}
-                  <p className="text-xs text-muted-foreground">Document storage is a listed integration point.</p>
-                </div>
+                <DriveFilesPanel opportunityId={job.id} driveFolderUrl={job.driveFolderUrl} />
               </TabsContent>
 
               <TabsContent value="activity" className="mt-4 space-y-1.5">

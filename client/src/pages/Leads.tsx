@@ -26,6 +26,7 @@ import type { Job, User, Estimate } from "@shared/schema";
 import { JOB_TYPES, STAGES, SEG_BID_TYPE } from "@shared/schema";
 import { JobTypeBadge } from "@/pages/Estimates";
 import { SegmentationBlock, type SegValues } from "@/components/Segmentation";
+import AddressValidationField from "@/components/AddressValidationField";
 import { metricsFor } from "@/lib/record-derive";
 import { useListView, applyList, exportCsv, ListToolbar, SortHead } from "@/components/ListView";
 
@@ -436,10 +437,11 @@ function NewLeadDialog({
               <Input value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} data-testid="input-email" />
             </div>
           </div>
-          <div className="space-y-1.5">
-            <Label>Address</Label>
-            <Input value={f.address} onChange={(e) => setF({ ...f, address: e.target.value })} data-testid="input-address" />
-          </div>
+          <AddressValidationField
+            value={f.address}
+            onChange={(v) => setF((prev: any) => ({ ...prev, address: v, addressVerified: false }))}
+            onValidated={(fields) => setF((prev: any) => ({ ...prev, ...fields }))}
+          />
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Source</Label>

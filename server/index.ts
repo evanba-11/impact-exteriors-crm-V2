@@ -16,6 +16,8 @@ declare module "http" {
 
 app.use(
   express.json({
+    // Drive uploads are posted as base64 JSON; allow larger payloads.
+    limit: "30mb",
     verify: (req, _res, buf) => {
       req.rawBody = buf;
     },
